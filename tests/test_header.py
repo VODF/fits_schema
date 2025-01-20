@@ -8,11 +8,11 @@ from astropy.io import fits
 def test_length():
     from fits_schema.header import HeaderCard, HeaderSchema
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         class LengthHeader(HeaderSchema):
             MORE_THAN_8 = HeaderCard()
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         class LowerHeader(HeaderSchema):
             lowercas = HeaderCard()
 
