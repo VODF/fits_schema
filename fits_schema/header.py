@@ -194,8 +194,22 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
 
     @classmethod
     def _header_schemas(cls) -> list[Self]:
-        """returns a list of """
-        return [base for base in cls.__bases__ if issubclass(base, HeaderSchema)]
+        """returns a list of HeaderSchema parents"""
+        return list(reversed([cls,] + [base for base in cls.__bases__ if issubclass(base, HeaderSchema)]))
+
+    @classmethod
+    def grouped_cards(self) -> dict[Self,HeaderCard]:
+        """Return a list of cards grouped by parent HeaderSchema class"""
+        seen = []
+        group = {}
+
+        for schema in self._header_schemas():
+            group[schema] = {k: c for k,c in schema.__cards__.items() if k not in seen}
+            seen.extend(schema.__cards__.keys())
+
+        return group
+
+
 
     @classmethod
     def validate_header(cls, header: fits.Header, onerror='raise'):
