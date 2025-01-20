@@ -265,13 +265,13 @@ def test_header_not_schema():
 
 
 def test_header():
-    from fits_schema.binary_table import BinaryTable, Double
-    from fits_schema.header import HeaderSchema, HeaderCard
+    from fits_schema.binary_table import BinaryTable, BinaryTableHeader, Double
+    from fits_schema.header import HeaderCard
 
     class TestTable(BinaryTable):
         energy = Double(unit=u.TeV)
 
-        class __header__(HeaderSchema):
+        class __header__(BinaryTableHeader):
             TEST = HeaderCard(type_=str)
 
     t = Table({'energy': [1, 2, 3] * u.TeV})
