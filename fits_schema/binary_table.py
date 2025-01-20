@@ -176,28 +176,11 @@ class BinaryTableMeta(type):
         dct['__columns__'] = {}
         dct['__slots__'] = ('__data__', 'header')
 
-        header_schema = dct.pop('__header__', None)
-        if header_schema is not None and not issubclass(header_schema, HeaderSchema):
+        header_schema = dct.get('__header__', None)
+        if header_schema is not None and not issubclass(header_schema, BinaryTableHeader):
             raise TypeError(
-                '`__header__` must be a class inheriting from `HeaderSchema`'
+                '`__header__` must be a class inheriting from `BinaryTableHeader`'
             )
-
-        # create a new header schema class for this table
-        dct['__header__'] = HeaderSchemaMeta.__new__(
-            HeaderSchemaMeta, name + 'Header', (BinaryTableHeader, ), {},
-        )
-
-        # inherit header schema and  from bases
-        for base in reversed(bases):
-            if hasattr(base, '__header__'):
-                dct['__header__'].update(base.__header__)
-
-            if issubclass(base, BinaryTable):
-                dct['__columns__'].update(base.__columns__)
-
-        if header_schema is not None:
-            # add user defined header last
-            dct['__header__'].update(header_schema)
 
         # collect columns of this new schema
         for k, v in dct.items():
