@@ -63,6 +63,7 @@ class Column(metaclass=ABCMeta):
         name=None,
         ndim=None,
         shape=None,
+        description: str="",
     ):
         self.required = required
         self.unit = unit
@@ -70,6 +71,7 @@ class Column(metaclass=ABCMeta):
         self.name = name
         self.shape = shape
         self.ndim = ndim
+        self.description = description
 
         if self.shape is not None:
             self.shape = tuple(shape)
