@@ -200,12 +200,12 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
     @classmethod
     def grouped_cards(self) -> dict[Self,HeaderCard]:
         """Return a list of cards grouped by parent HeaderSchema class"""
-        seen = []
+        seen = set()
         group = {}
 
         for schema in self._header_schemas():
             group[schema] = {k: c for k,c in schema.__cards__.items() if k not in seen}
-            seen.extend(schema.__cards__.keys())
+            seen.update(schema.__cards__.keys())
 
         return group
 
