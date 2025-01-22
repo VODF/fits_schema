@@ -50,7 +50,7 @@ class HeaderCard:
         match str values case insensitively
     '''
     def __init__(
-        self, keyword=None, description: str = "", *,required=True,
+        self, keyword=None, *,  description: str = "", required=True,
         allowed_values=None, position=None, type_=None,
         empty=None, case_insensitive=True,
     ):
