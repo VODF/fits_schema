@@ -22,7 +22,7 @@ dynamic = ["version"]
 
 [project.urls]
 repository = "https://github.com/VODF/fits_schema"
-documentation = ""
+documentation = "https://github.com/VODF/fits_schema"
 
 # Command-line scripts mapping the name of the tool to the import and function to execute
 [project.scripts]
