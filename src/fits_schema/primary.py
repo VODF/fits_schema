@@ -1,7 +1,11 @@
+"""Primary Header Schema."""
+
 from .header import HeaderCard, HeaderSchema
 
 
 class PrimaryHeader(HeaderSchema):
+    """Primary Header Schema."""
+
     SIMPLE = HeaderCard(allowed_values=[True], position=0)
     BITPIX = HeaderCard(allowed_values=[8, 16, 32, 64, -32, -64], position=1)
     NAXIS = HeaderCard(position=2, allowed_values=range(999))

@@ -107,6 +107,9 @@ extend-select = [
 ignore = [
     "COM812", # incompatible with ruff format
     "ISC001", # incompatible with ruff format
+    "N818", # naming of exceptions ok
+    "N801", # to allow __header__ classes
+    "PT011", # pytest.raises(ValueError) too broad
 ]
 
 [tool.ruff.lint.pydocstyle]

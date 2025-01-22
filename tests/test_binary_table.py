@@ -106,7 +106,8 @@ def test_shape():
         table.validate_data()
 
     # this should work
-    table = TestTable(test=[np.arange(10), np.random.normal(size=10)])
+    rng = np.random.default_rng(1337)
+    table = TestTable(test=[np.arange(10), rng.normal(size=10)])
     table.validate_data()
 
 
@@ -133,7 +134,10 @@ def test_ndim():
 
     # each row is 2d, fits
     table = TestTable(
-        test=[np.random.normal(size=(5, 3)), np.random.normal(size=(5, 3))]
+        test=[
+            np.random.default_rng().normal(size=(5, 3)),
+            np.random.default_rng().normal(size=(5, 3)),
+        ]
     )
     table.validate_data()
 
@@ -216,8 +220,8 @@ def test_validate_hdu():
         dec = Double(unit=u.deg)
 
     data = {
-        "energy": 10 ** np.random.uniform(-1, 2, 100) * u.TeV,
-        "ra": np.random.uniform(0, 360, 100) * u.deg,
+        "energy": 10 ** np.random.default_rng().uniform(-1, 2, 100) * u.TeV,
+        "ra": np.random.default_rng().uniform(0, 360, 100) * u.deg,
     }
 
     # make sure a correct table passes validation
@@ -226,13 +230,13 @@ def test_validate_hdu():
     with pytest.raises(RequiredMissing):
         TestTable.validate_hdu(hdu)
 
-    t["dec"] = np.random.uniform(0, 360, 100) * u.TeV
+    t["dec"] = np.random.default_rng().uniform(0, 360, 100) * u.TeV
     hdu = fits.BinTableHDU(t)
 
     with pytest.raises(WrongUnit):
         TestTable.validate_hdu(hdu)
 
-    t["dec"] = np.random.uniform(0, 360, 100) * u.deg
+    t["dec"] = np.random.default_rng().uniform(0, 360, 100) * u.deg
     hdu = fits.BinTableHDU(t)
     TestTable.validate_hdu(hdu)
 
@@ -246,8 +250,8 @@ def test_optional_columns():
         dec = Double(unit=u.deg, required=False)
 
     data = {
-        "energy": 10 ** np.random.uniform(-1, 2, 100) * u.TeV,
-        "ra": np.random.uniform(0, 360, 100) * u.deg,
+        "energy": 10 ** np.random.default_rng().uniform(-1, 2, 100) * u.TeV,
+        "ra": np.random.default_rng().uniform(0, 360, 100) * u.deg,
     }
 
     # make sure a correct table passes validation

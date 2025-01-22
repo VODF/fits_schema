@@ -1,5 +1,5 @@
 """
-Schema definitions for FITS binary table extensions
+Schema definitions for FITS binary table extensions.
 
 See section 7.3 of the FITS standard:
 https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 
 
 class BinaryTableHeader(HeaderSchema):
-    """default binary table header schema"""
+    """Default binary table header schema."""
 
     XTENSION = HeaderCard(allowed_values="BINTABLE", position=0)
     BITPIX = HeaderCard(allowed_values=8, position=1)
@@ -41,9 +41,7 @@ class BinaryTableHeader(HeaderSchema):
 
 
 class Column(metaclass=ABCMeta):
-    """
-    A column descriptor for columns consisting of a primitive data type
-    or fixed shape array.
+    """A binary table column descriptor.
 
     Attributes
     ----------
@@ -94,6 +92,7 @@ class Column(metaclass=ABCMeta):
                 self.ndim = 0
 
     def __get__(self, instance, owner=None):
+        """Get data."""
         # class attribute access
         if instance is None:
             return self
@@ -101,19 +100,22 @@ class Column(metaclass=ABCMeta):
         return instance.__data__.get(self.name)
 
     def __set__(self, instance, value):
+        """Set data."""
         instance.__data__[self.name] = value
 
     def __set_name__(self, owner, name):
+        """Rename variable (protocol)."""
         # respect user override for names that are not valid identifiers
         if self.name is None:
             self.name = name
 
     def __delete__(self, instance):
-        """Clear data of this column"""
+        """Clear data of this column."""
         if self.name in instance.__data__:
             del instance.__data__[self.name]
 
     def __repr__(self):
+        """Representation of the class."""
         unit = f"'{self.unit.to_string('fits')}'" if self.unit is not None else None
         return (
             f"{self.__class__.__name__}("
@@ -124,10 +126,10 @@ class Column(metaclass=ABCMeta):
     @property
     @abstractmethod
     def dtype():
-        """Equivalent numpy dtype"""
+        """Equivalent numpy dtype."""
 
     def validate_data(self, data, onerror="raise"):
-        """Validate the data of this column in table"""
+        """Validate the data of this column in table."""
         if data is None:
             if self.required:
                 log_or_raise(
@@ -191,9 +193,10 @@ class Column(metaclass=ABCMeta):
 
 
 class BinaryTableMeta(type):
-    """Metaclass for the BinaryTable class"""
+    """Metaclass for the BinaryTable class."""
 
     def __new__(cls, name, bases, dct):
+        """Create class."""
         dct["__columns__"] = {}
         dct["__slots__"] = ("__data__", "header")
 
@@ -232,9 +235,7 @@ class BinaryTableMeta(type):
 
 
 class BinaryTable(metaclass=BinaryTableMeta):
-    """
-    Schema definition class for a binary table
-    """
+    """Schema definition class for a binary table."""
 
     def __init__(self, **column_data):
         self.__data__ = {}
@@ -244,6 +245,7 @@ class BinaryTable(metaclass=BinaryTableMeta):
             setattr(self, k, v)
 
     def validate_data(self):
+        """Check that data matches schema."""
         for k, col in self.__columns__.items():
             validated = col.validate_data(self.__data__.get(k))
             if validated is not None:
@@ -251,6 +253,7 @@ class BinaryTable(metaclass=BinaryTableMeta):
 
     @classmethod
     def validate_hdu(cls, hdu: fits.BinTableHDU, onerror="raise"):
+        """Check that HDU matches schema."""
         if not isinstance(hdu, fits.BinTableHDU):
             raise TypeError("hdu is not a BinTableHDU")
 
@@ -272,77 +275,77 @@ class BinaryTable(metaclass=BinaryTableMeta):
 
 
 class Bool(Column):
-    """A Boolean binary table column"""
+    """A Boolean binary table column."""
 
     tform_code = "L"
     dtype = bool
 
 
 class BitField(Column):
-    """Bitfield binary table column"""
+    """Bitfield binary table column."""
 
     tform_code = "X"
     dtype = bool
 
 
 class Byte(Column):
-    """Byte binary table column"""
+    """Byte binary table column."""
 
     tform_code = "B"
     dtype = np.uint8
 
 
 class Int16(Column):
-    """16 Bit signed integer binary table column"""
+    """16 Bit signed integer binary table column."""
 
     tform_code = "I"
     dtype = np.int16
 
 
 class Int32(Column):
-    """32 Bit signed integer binary table column"""
+    """32 Bit signed integer binary table column."""
 
     tform_code = "J"
     dtype = np.int32
 
 
 class Int64(Column):
-    """64 Bit signed integer binary table column"""
+    """64 Bit signed integer binary table column."""
 
     tform_code = "K"
     dtype = np.int64
 
 
 class Char(Column):
-    """Single byte character binary table column"""
+    """Single byte character binary table column."""
 
     tform_code = "A"
     dtype = np.dtype("S1")
 
 
 class Float(Column):
-    """Single precision floating point binary table column"""
+    """Single precision floating point binary table column."""
 
     tform_code = "E"
     dtype = np.float32
 
 
 class Double(Column):
-    """Single precision floating point binary table column"""
+    """Single precision floating point binary table column."""
 
     tform_code = "D"
     dtype = np.float64
 
 
 class ComplexFloat(Column):
-    """Single precision complex binary table column"""
+    """Single precision complex binary table column."""
 
     tform_code = "C"
     dtype = np.csingle
 
 
 class ComplexDouble(Column):
-    """Single precision complex binary table column"""
+    """Single precision complex binary table column."""
 
     tform_code = "M"
     dtype = np.cdouble

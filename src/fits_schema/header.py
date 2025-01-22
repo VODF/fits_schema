@@ -32,7 +32,7 @@ IGNORE = TABLE_KEYWORDS
 
 class HeaderCard:
     """
-    Schema for the entry of a FITS header
+    Schema for the entry of a FITS header.
 
     Attributes
     ----------
@@ -108,6 +108,7 @@ class HeaderCard:
         self.allowed_values = vals
 
     def __set_name__(self, owner, name):
+        """Rename to keyword if existing and check name style."""
         if self.keyword is None:
             if len(name) > 8:
                 raise ValueError("FITS header keywords must be 8 characters or shorter")
@@ -120,7 +121,7 @@ class HeaderCard:
             self.keyword = name
 
     def validate(self, card, pos, onerror="raise"):
-        """Validate an astropy.io.fits.card.Card"""
+        """Validate an astropy.io.fits.card.Card."""
         valid = True
         k = self.keyword
 
@@ -167,7 +168,10 @@ class HeaderCard:
 
 
 class HeaderSchemaMeta(type):
+    """Metaclass for HeaderSchema."""
+
     def __new__(cls, name, bases, dct):
+        """Instantiate and check a HeaderSchema."""
         dct["__cards__"] = {}
         dct["__slots__"] = tuple()
 
@@ -186,7 +190,7 @@ class HeaderSchemaMeta(type):
 
 class HeaderSchema(metaclass=HeaderSchemaMeta):
     """
-    Schema definition for the header of a FITS HDU
+    Schema definition for the header of a FITS HDU.
 
     To be added as `class __header_schema__(HeaderSchema)` to HDU schema classes.
 
@@ -207,7 +211,7 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
 
     @classmethod
     def _header_schemas(cls) -> list[Self]:
-        """Returns a list of HeaderSchema parents"""
+        """Return a list of HeaderSchema parents."""
         return list(
             reversed(
                 [
@@ -219,7 +223,7 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
 
     @classmethod
     def grouped_cards(cls) -> dict[Self, list[HeaderCard]]:
-        """Return a list of cards grouped by parent HeaderSchema class"""
+        """Return a list of cards grouped by parent HeaderSchema class."""
         seen = set()
         group = {}
 
@@ -231,6 +235,7 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
 
     @classmethod
     def validate_header(cls, header: fits.Header, onerror="raise"):
+        """Check a header against the schema."""
         required = {k for k, c in cls.__cards__.items() if c.required}
         missing = required - set(header.keys())
 
@@ -260,4 +265,5 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
 
     @classmethod
     def update(cls, other_schema):
+        """Update cards."""
         cls.__cards__.update(other_schema.__cards__)

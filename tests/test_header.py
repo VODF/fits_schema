@@ -140,8 +140,8 @@ def test_inheritance():
         BAR = HeaderCard(type_=int)
 
     assert set(Header.__cards__) == set(BaseHeader.__cards__)
-    assert BaseHeader.BAR.type == str
-    assert Header.BAR.type == int
+    assert BaseHeader.BAR.type is str
+    assert Header.BAR.type is int
 
 
 def test_invalid_arguments():
