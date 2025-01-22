@@ -1,34 +1,121 @@
 name: CI
 
-on: [push, pull_request]
+
+# by not building all branches on push, we avoid the duplicated builds in PRs
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '**'
+  pull_request:
+
 
 env:
+  NUMBA_NUM_THREADS: 1
   MPLBACKEND: Agg
   PYTEST_ADDOPTS: --color=yes
 
+
 jobs:
-  tests:
+  static-code-checks:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: --all-files
+
+  tests:
     strategy:
       matrix:
-        python-version: ["3.11","3.12", "3.13"]
+        include:
+          # linux builds
+          - python-version: "3.11"
+            os: ubuntu-latest
+            extra-args: ['codecov']
+
+          - python-version: "3.12"
+            os: ubuntu-latest
+            extra-args: ['codecov']
+
+          - python-version: "3.13"
+            os: ubuntu-latest
+            extra-args: ['codecov']
+
+          # macos builds
+          - python-version: "3.10"
+            os: macos-latest
+
+          - python-version: "3.11"
+            os: macos-latest
+
+    runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
+      - name: Update pip
         run: |
-          pip install -U pip
-          pip install ".[all]"
+          python -m pip install --upgrade pip
 
-      - name: Tests
+      - name: Build the package
         run: |
-          python -m pytest \
+          pip install build
+          python -m build
+
+      - name: Install the package
+        run: pip install .[test]
+
+      - name: Install the package in editable mode
+        run: pip install --editable .[test]
+
+      - name: Test with pytest
+        run: |
+          pytest --cov --cov-report=xml --cov-branch \
             --doctest-modules \
-            --cov fits_schema --cov-report=xml \
-            tests fits_schema
+            --ignore-glob="*/_dev_version" \
+            -v
+
+      - uses: codecov/codecov-action@v3
+        if: contains(matrix.extra-args, 'codecov')
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+
+      - name: Install doc dependencies
+        run: |
+          pip install -e .[doc]
+          git describe --tags
+          python -c 'import template; print(template.__version__)'
+
+      - name: Build docs
+        run: make html SPHINXOPTS="-W --keep-going -n --color -j auto"
+
+      - name: Deploy to github pages
+        # only run on push to master
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: build/html
+          clean: true
+          single_commit: true
