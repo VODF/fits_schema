@@ -175,16 +175,16 @@ def test_data_types():
     assert table.validate_data() is None
 
     # integer is ok
-    table.test = 1
+    table.test = np.array([1, 2, 3], dtype=np.int16)
     table.validate_data()
 
     # double would loose information
-    table.test = 3.14
+    table.test = np.array([1., 2., 3.])
     with pytest.raises(WrongType):
         table.validate_data()
 
     # too large for int16
-    table.test = 2**15
+    table.test = np.array([1**15, 2**15, 3**15])
     with pytest.raises(WrongType):
         table.validate_data()
 
@@ -265,13 +265,13 @@ def test_header_not_schema():
 
 
 def test_header():
-    from fits_schema.binary_table import BinaryTable, Double
-    from fits_schema.header import HeaderSchema, HeaderCard
+    from fits_schema.binary_table import BinaryTable, BinaryTableHeader, Double
+    from fits_schema.header import HeaderCard
 
     class TestTable(BinaryTable):
         energy = Double(unit=u.TeV)
 
-        class __header__(HeaderSchema):
+        class __header__(BinaryTableHeader):
             TEST = HeaderCard(type_=str)
 
     t = Table({'energy': [1, 2, 3] * u.TeV})

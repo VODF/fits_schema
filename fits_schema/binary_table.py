@@ -63,6 +63,7 @@ class Column(metaclass=ABCMeta):
         name=None,
         ndim=None,
         shape=None,
+        description: str="",
     ):
         self.required = required
         self.unit = unit
@@ -70,6 +71,7 @@ class Column(metaclass=ABCMeta):
         self.name = name
         self.shape = shape
         self.ndim = ndim
+        self.description = description
 
         if self.shape is not None:
             self.shape = tuple(shape)
@@ -176,16 +178,15 @@ class BinaryTableMeta(type):
         dct['__columns__'] = {}
         dct['__slots__'] = ('__data__', 'header')
 
-        header_schema = dct.pop('__header__', None)
-        if header_schema is not None and not issubclass(header_schema, HeaderSchema):
+        header_schema = dct.get('__header__', None)
+        if header_schema is not None and not issubclass(header_schema, BinaryTableHeader):
             raise TypeError(
-                '`__header__` must be a class inheriting from `HeaderSchema`'
+                '`__header__` must be a class inheriting from `BinaryTableHeader`'
             )
 
-        # create a new header schema class for this table
-        dct['__header__'] = HeaderSchemaMeta.__new__(
-            HeaderSchemaMeta, name + 'Header', (BinaryTableHeader, ), {},
-        )
+        # ensure we have a __header__ if not specified
+        if not header_schema:
+            dct['__header__'] = BinaryTableHeader()
 
         # inherit header schema and  from bases
         for base in reversed(bases):
@@ -195,15 +196,15 @@ class BinaryTableMeta(type):
             if issubclass(base, BinaryTable):
                 dct['__columns__'].update(base.__columns__)
 
-        if header_schema is not None:
-            # add user defined header last
-            dct['__header__'].update(header_schema)
-
         # collect columns of this new schema
         for k, v in dct.items():
             if isinstance(v, Column):
                 k = v.name or k
                 dct['__columns__'][k] = v
+
+        if header_schema is not None:
+            # add user defined header last
+            dct['__header__'].update(header_schema)
 
         new_cls = super().__new__(cls, name, bases, dct)
         return new_cls
