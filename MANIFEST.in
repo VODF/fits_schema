@@ -1,2 +1,2 @@
-prune src/template/_dev_version
+prune src/fits_schema/_dev_version
 prune .github
