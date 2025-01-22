@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
+"""Definitions from the FITS standard, for schema validation."""
+
 from .header import HeaderSchema, HeaderCard
 
+__all__ = ["FITSStandardHeaders"]
 
 class FITSStandardHeaders(HeaderSchema):
     """Optional Headers defined by the `FITS Standard v4.0
