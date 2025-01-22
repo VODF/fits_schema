@@ -198,7 +198,7 @@ def test_inheritance():
         bar = Bool()
 
     class TestTable(BaseTable):
-        # make sure it's different from base defintion
+        # make sure it's different from base definition
         bar = Bool(required=not BaseTable.foo.required)
         baz = Bool()
 

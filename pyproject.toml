@@ -166,4 +166,5 @@ ignore = [
 # fits files are sometimes mistaken for text files as they start with an ASCII header
 # we need to ignore them here
 [tool.codespell]
-skip = "*.fits,*.fits.fz"
+ignore-words-list = "referenc" # codespell:ignore
+skip = "*.fits,*.fits.fz,.codespell-ignore"

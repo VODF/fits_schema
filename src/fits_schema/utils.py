@@ -8,8 +8,8 @@ log = logging.getLogger(__name__)
 
 def log_or_raise(msg, exc_type=ValidationError, log=log, onerror="raise"):
     """Utility for error handling.
-    onerror decides if a validation error or warnign is raised (either as exception)
-    or as warning, depending on `exception_type`
+    onerror decides if a validation error or warning is raised (either as exception)
+    or as warning, depending on `exception_type`n
     or if it is just logged.
     """
     # raise if exception, warn if warning
