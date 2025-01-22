@@ -5,23 +5,23 @@ See section 7.3 of the FITS standard:
 https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
 """
 
+import logging
 from abc import ABCMeta, abstractmethod
-import numpy as np
+
 import astropy.units as u
+import numpy as np
 from astropy.io import fits
 from astropy.table import Table
-import logging
 
-from .header import HeaderSchema, HeaderCard, HeaderSchemaMeta
 from .exceptions import (
-    WrongUnit,
-    WrongDims,
-    WrongType,
     RequiredMissing,
+    WrongDims,
     WrongShape,
+    WrongType,
+    WrongUnit,
 )
+from .header import HeaderCard, HeaderSchema
 from .utils import log_or_raise
-
 
 log = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ class Column(metaclass=ABCMeta):
             self.name = name
 
     def __delete__(self, instance):
-        """clear data of this column"""
+        """Clear data of this column"""
         if self.name in instance.__data__:
             del instance.__data__[self.name]
 

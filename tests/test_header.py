@@ -1,11 +1,11 @@
 import pytest
+from astropy.io import fits
 from fits_schema.exceptions import (
     RequiredMissing,
-    WrongValue,
     WrongPosition,
     WrongType,
+    WrongValue,
 )
-from astropy.io import fits
 
 
 def test_length():
@@ -72,7 +72,7 @@ def test_wrong_value():
 
 
 def test_type():
-    from fits_schema.header import HeaderSchema, HeaderCard
+    from fits_schema.header import HeaderCard, HeaderSchema
 
     h = fits.Header()
 
@@ -100,7 +100,7 @@ def test_type():
 
 
 def test_empty():
-    from fits_schema.header import HeaderSchema, HeaderCard
+    from fits_schema.header import HeaderCard, HeaderSchema
 
     h = fits.Header()
 
@@ -129,7 +129,7 @@ def test_empty():
 
 
 def test_inheritance():
-    from fits_schema.header import HeaderSchema, HeaderCard
+    from fits_schema.header import HeaderCard, HeaderSchema
 
     class BaseHeader(HeaderSchema):
         FOO = HeaderCard()
@@ -155,8 +155,8 @@ def test_invalid_arguments():
 
 
 def test_additional():
-    from fits_schema.header import HeaderSchema, HeaderCard
     from fits_schema.exceptions import AdditionalHeaderCard
+    from fits_schema.header import HeaderCard, HeaderSchema
 
     class Header(HeaderSchema):
         TEST = HeaderCard()
@@ -170,7 +170,7 @@ def test_additional():
 
 
 def test_case():
-    from fits_schema.header import HeaderSchema, HeaderCard
+    from fits_schema.header import HeaderCard, HeaderSchema
 
     class Header(HeaderSchema):
         TEST = HeaderCard(allowed_values={"foo"})

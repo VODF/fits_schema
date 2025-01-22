@@ -2,7 +2,7 @@
 
 """Definitions from the FITS standard, for schema validation."""
 
-from .header import HeaderSchema, HeaderCard
+from .header import HeaderCard, HeaderSchema
 
 __all__ = ["FITSStandardHeaders"]
 

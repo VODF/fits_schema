@@ -1,15 +1,14 @@
 import astropy.units as u
-from astropy.table import Table
-from astropy.io import fits
-import pytest
 import numpy as np
-
+import pytest
+from astropy.io import fits
+from astropy.table import Table
 from fits_schema.exceptions import (
-    WrongUnit,
-    WrongType,
     RequiredMissing,
     WrongDims,
     WrongShape,
+    WrongType,
+    WrongUnit,
 )
 
 

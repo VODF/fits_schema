@@ -1,4 +1,5 @@
 import logging
+
 import pytest
 from fits_schema.exceptions import AdditionalHeaderCard
 

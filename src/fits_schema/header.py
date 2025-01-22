@@ -5,22 +5,22 @@ See section 4 of the FITS Standard:
 https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
 """
 
-from datetime import date, datetime
-from typing import Self
-from .exceptions import (
-    RequiredMissing,
-    WrongType,
-    WrongPosition,
-    AdditionalHeaderCard,
-    WrongValue,
-)
+import logging
 import re
 from collections.abc import Iterable
+from datetime import date, datetime
+from typing import Self
+
 from astropy.io import fits
-import logging
 
+from .exceptions import (
+    AdditionalHeaderCard,
+    RequiredMissing,
+    WrongPosition,
+    WrongType,
+    WrongValue,
+)
 from .utils import log_or_raise
-
 
 log = logging.getLogger(__name__)
 
@@ -207,7 +207,7 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
 
     @classmethod
     def _header_schemas(cls) -> list[Self]:
-        """returns a list of HeaderSchema parents"""
+        """Returns a list of HeaderSchema parents"""
         return list(
             reversed(
                 [
