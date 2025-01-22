@@ -15,6 +15,7 @@ authors = [
 requires-python = ">=3.10"
 dependencies = [
     "numpy",
+    "astropy>=6",
 ]
 
 # needed for setuptools_scm, we don"t define a static version
