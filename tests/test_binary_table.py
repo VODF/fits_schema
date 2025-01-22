@@ -5,7 +5,11 @@ import pytest
 import numpy as np
 
 from fits_schema.exceptions import (
-    WrongUnit, WrongType, RequiredMissing, WrongDims, WrongShape,
+    WrongUnit,
+    WrongType,
+    RequiredMissing,
+    WrongDims,
+    WrongShape,
 )
 
 
@@ -75,21 +79,21 @@ def test_access():
     assert t.test[0] == 5.0
 
     # assignment does not validate
-    t.test == ['foo']
+    t.test == ["foo"]
 
     del t.test
     assert t.test is None
 
     # test that we can only assign to columns
     with pytest.raises(AttributeError):
-        t.foo = 'bar'
+        t.foo = "bar"
 
 
 def test_shape():
     from fits_schema.binary_table import BinaryTable, Double
 
     class TestTable(BinaryTable):
-        test = Double(shape=(10, ))
+        test = Double(shape=(10,))
 
     # single number, wrong number of dimensions
     table = TestTable(test=3.14)
@@ -118,25 +122,23 @@ def test_ndim():
         table.validate_data()
 
     # 1d
-    table = TestTable(test=[
-        [1, 2, 3],
-        [4, 5, 6],
-    ])
+    table = TestTable(
+        test=[
+            [1, 2, 3],
+            [4, 5, 6],
+        ]
+    )
     with pytest.raises(WrongDims):
         table.validate_data()
 
     # each row is 2d, fits
-    table = TestTable(test=[
-        np.random.normal(size=(5, 3)),
-        np.random.normal(size=(5, 3))
-    ])
+    table = TestTable(
+        test=[np.random.normal(size=(5, 3)), np.random.normal(size=(5, 3))]
+    )
     table.validate_data()
 
     # 3d not
-    table = TestTable(test=[
-        np.zeros((2, 2, 2)),
-        np.ones((2, 2, 2))
-    ])
+    table = TestTable(test=[np.zeros((2, 2, 2)), np.ones((2, 2, 2))])
     with pytest.raises(WrongDims):
         table.validate_data()
 
@@ -179,7 +181,7 @@ def test_data_types():
     table.validate_data()
 
     # double would loose information
-    table.test = np.array([1., 2., 3.])
+    table.test = np.array([1.0, 2.0, 3.0])
     with pytest.raises(WrongType):
         table.validate_data()
 
@@ -201,7 +203,7 @@ def test_inheritance():
         bar = Bool(required=not BaseTable.foo.required)
         baz = Bool()
 
-    assert list(TestTable.__columns__) == ['foo', 'bar', 'baz']
+    assert list(TestTable.__columns__) == ["foo", "bar", "baz"]
     assert TestTable.bar.required != BaseTable.bar.required
 
 
@@ -214,8 +216,8 @@ def test_validate_hdu():
         dec = Double(unit=u.deg)
 
     data = {
-        'energy': 10**np.random.uniform(-1, 2, 100) * u.TeV,
-        'ra': np.random.uniform(0, 360, 100) * u.deg,
+        "energy": 10 ** np.random.uniform(-1, 2, 100) * u.TeV,
+        "ra": np.random.uniform(0, 360, 100) * u.deg,
     }
 
     # make sure a correct table passes validation
@@ -224,13 +226,13 @@ def test_validate_hdu():
     with pytest.raises(RequiredMissing):
         TestTable.validate_hdu(hdu)
 
-    t['dec'] = np.random.uniform(0, 360, 100) * u.TeV
+    t["dec"] = np.random.uniform(0, 360, 100) * u.TeV
     hdu = fits.BinTableHDU(t)
 
     with pytest.raises(WrongUnit):
         TestTable.validate_hdu(hdu)
 
-    t['dec'] = np.random.uniform(0, 360, 100) * u.deg
+    t["dec"] = np.random.uniform(0, 360, 100) * u.deg
     hdu = fits.BinTableHDU(t)
     TestTable.validate_hdu(hdu)
 
@@ -244,8 +246,8 @@ def test_optional_columns():
         dec = Double(unit=u.deg, required=False)
 
     data = {
-        'energy': 10**np.random.uniform(-1, 2, 100) * u.TeV,
-        'ra': np.random.uniform(0, 360, 100) * u.deg,
+        "energy": 10 ** np.random.uniform(-1, 2, 100) * u.TeV,
+        "ra": np.random.uniform(0, 360, 100) * u.deg,
     }
 
     # make sure a correct table passes validation
@@ -258,6 +260,7 @@ def test_header_not_schema():
     from fits_schema.binary_table import BinaryTable
 
     with pytest.raises(TypeError):
+
         class Table(BinaryTable):
             # should inherit from HeaderSchema
             class __header__:
@@ -274,17 +277,17 @@ def test_header():
         class __header__(BinaryTableHeader):
             TEST = HeaderCard(type_=str)
 
-    t = Table({'energy': [1, 2, 3] * u.TeV})
+    t = Table({"energy": [1, 2, 3] * u.TeV})
     hdu = fits.BinTableHDU(t)
 
     with pytest.raises(RequiredMissing):
         TestTable.validate_hdu(hdu)
 
-    t.meta['TEST'] = 5
+    t.meta["TEST"] = 5
     hdu = fits.BinTableHDU(t)
     with pytest.raises(WrongType):
         TestTable.validate_hdu(hdu)
 
-    t.meta['TEST'] = 'hello'
+    t.meta["TEST"] = "hello"
     hdu = fits.BinTableHDU(t)
     TestTable.validate_hdu(hdu)
