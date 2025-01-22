@@ -12,8 +12,6 @@ on:
 
 
 env:
-  NUMBA_NUM_THREADS: 1
-  MPLBACKEND: Agg
   PYTEST_ADDOPTS: --color=yes
 
 
