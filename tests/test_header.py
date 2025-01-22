@@ -1,5 +1,6 @@
 import pytest
 from astropy.io import fits
+
 from fits_schema.exceptions import (
     RequiredMissing,
     WrongPosition,
