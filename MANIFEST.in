@@ -1,0 +1,2 @@
+prune src/template/_dev_version
+prune .github
