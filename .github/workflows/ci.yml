@@ -76,9 +76,7 @@ jobs:
       - name: Test with pytest
         run: |
           pytest --cov --cov-report=xml --cov-branch \
-            --doctest-modules \
-            --ignore-glob="*/_dev_version" \
-            -v
+            --doctest-modules -v
 
       - uses: codecov/codecov-action@v3
         if: contains(matrix.extra-args, 'codecov')
