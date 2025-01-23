@@ -48,8 +48,20 @@ default_role = "py:obj"
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "astropy": ("https://docs.astropy.org/en/stable", None),
-    "numpy": ("https://numpy.org/doc/stable", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
 }
+
+# needed for now... don't know why not correctly identified by intersphinx
+nitpick_ignore = [
+    ("py:class", "numpy.uint8"),
+    ("py:class", "numpy.complex128"),
+    ("py:class", "numpy.complex64"),
+    ("py:class", "numpy.float64"),
+    ("py:class", "numpy.float32"),
+    ("py:class", "numpy.int16"),
+    ("py:class", "numpy.int32"),
+    ("py:class", "numpy.int64"),
+]
 
 # -- Options for HTML output -------------------------------------------------
 

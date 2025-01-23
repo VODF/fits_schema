@@ -199,8 +199,8 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
     Add `HeaderCard` class members to define the schema.
 
 
-    Example
-    -------
+    Examples
+    --------
     >>> from fits_schema.binary_table import BinaryTable, Int32
     >>> from fits_schema.header import HeaderSchema, HeaderCard
     >>>
