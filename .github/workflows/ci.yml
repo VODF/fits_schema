@@ -84,29 +84,20 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.8"
+          python-version: "3.12"
 
       - name: Install doc dependencies
         run: |
           pip install -e .[doc]
           git describe --tags
-          python -c 'import template; print(template.__version__)'
+          python -c 'import fits_schema; print(fits_schema.__version__)'
 
       - name: Build docs
         run: make html SPHINXOPTS="-W --keep-going -n --color -j auto"
-
-      - name: Deploy to github pages
-        # only run on push to master
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: build/html
-          clean: true
-          single_commit: true
