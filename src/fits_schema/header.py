@@ -22,6 +22,8 @@ from .exceptions import (
 )
 from .utils import log_or_raise
 
+__all__ = ["HeaderSchema", "HeaderCard"]
+
 log = logging.getLogger(__name__)
 
 
@@ -192,9 +194,9 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
     """
     Schema definition for the header of a FITS HDU.
 
-    To be added as `class __header_schema__(HeaderSchema)` to HDU schema classes.
+    To be added as ``class __header_schema__(HeaderSchema)`` to HDU schema classes.
 
-    Add `Card` class members to define the schema.
+    Add `HeaderCard` class members to define the schema.
 
 
     Example

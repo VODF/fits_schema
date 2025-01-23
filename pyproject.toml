@@ -12,10 +12,10 @@ authors = [
     {name = "Karl Kosack", email="karl.kosack@cea.fr"},
 ]
 
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "numpy",
-    "astropy>=6",
+    "astropy >=6",
 ]
 
 # needed for setuptools_scm, we don"t define a static version
@@ -40,7 +40,7 @@ test = [
 doc = [
   "sphinx",
   "numpydoc",
-  "ctao-sphinx-theme~=0.1.2",
+  "ctao-sphinx-theme",
   "sphinx-changelog",
 ]
 dev = [

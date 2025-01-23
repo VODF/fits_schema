@@ -23,6 +23,22 @@ from .exceptions import (
 from .header import HeaderCard, HeaderSchema
 from .utils import log_or_raise
 
+__all__ = [
+    "BinaryTableHeder",
+    "Column",
+    "BinaryTable",
+    "Bool",
+    "Byte",
+    "Int16",
+    "Int32",
+    "Int64",
+    "Char",
+    "Float",
+    "Double",
+    "ComplexFloat",
+    "ComplexDouble",
+]
+
 log = logging.getLogger(__name__)
 
 
@@ -55,7 +71,7 @@ class Column(metaclass=ABCMeta):
         Use to specify a different column name than the class attribute name.
     ndim: int
         Dimensionality of a single row, numbers have ndim=0.
-        The resulting data column has `ndim_col = ndim + 1`
+        The resulting data column has ``ndim_col = ndim + 1``
     shape: Tuple[int]
         Shape of a single row.
     """
