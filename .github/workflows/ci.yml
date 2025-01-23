@@ -100,4 +100,4 @@ jobs:
           python -c 'import fits_schema; print(fits_schema.__version__)'
 
       - name: Build docs
-        run: make html SPHINXOPTS="-W --keep-going -n --color -j auto"
+        run: make -C docs html SPHINXOPTS="-W --keep-going -n --color -j auto"
