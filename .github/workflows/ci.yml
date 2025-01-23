@@ -42,10 +42,10 @@ jobs:
             extra-args: ["codecov"]
 
           # macos builds
-          - python-version: "3.10"
+          - python-version: "3.12"
             os: macos-latest
 
-          - python-version: "3.11"
+          - python-version: "3.13"
             os: macos-latest
 
     runs-on: ${{ matrix.os }}
