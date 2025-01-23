@@ -1,3 +1,8 @@
 """FITS Schema."""
 
-__version__ = "0.5.6"
+from .version import __version__
+#from .header import Head
+
+__all__ = [
+    "__version__",
+]
