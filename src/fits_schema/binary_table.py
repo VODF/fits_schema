@@ -24,7 +24,7 @@ from .header import HeaderCard, HeaderSchema
 from .utils import log_or_raise
 
 __all__ = [
-    "BinaryTableHeder",
+    "BinaryTableHeader",
     "Column",
     "BinaryTable",
     "Bool",

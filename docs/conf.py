@@ -11,7 +11,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 import fits_schema
 
 project = "fits_schema"
-#copyright = "VODF"
+# copyright = "VODF"
 author = "Maximilian Linhoff"
 version = fits_schema.__version__
 # The full version, including alpha/beta/rc tags.
@@ -49,7 +49,6 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "astropy": ("https://docs.astropy.org/en/stable", None),
     "numpy": ("https://numpy.org/doc/stable", None),
-
 }
 
 # -- Options for HTML output -------------------------------------------------
@@ -58,7 +57,6 @@ html_theme = "ctao"
 html_theme_options = dict(
     navigation_with_keys=False,
     # setup for displaying multiple versions, also see setup in .gitlab-ci.yml
-
     ## Disable version switcher for now until we have a place to host the pages
     # switcher=dict(
     #     json_url="<URL to fits_template_documentation>/versions.json",  # noqa: E501
