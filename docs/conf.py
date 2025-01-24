@@ -83,15 +83,3 @@ html_theme_options = dict(
 html_static_path = []
 
 numpydoc_show_class_members = False
-
-nitpick_ignore = {
-    ("py:class", "numpy.uint8"),
-    ("py:class", "numpy.complex128"),
-    ("py:class", "numpy.complex64"),
-    ("py:class", "numpy.float64"),
-    ("py:class", "numpy.float32"),
-    ("py:class", "numpy.float64"),
-    ("py:class", "numpy.int16"),
-    ("py:class", "numpy.int32"),
-    ("py:class", "numpy.int64"),
-}
