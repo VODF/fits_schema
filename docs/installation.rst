@@ -11,13 +11,6 @@ As a user, install from pypi:
 
     $ pip install fits_schema
 
-Or ``conda-forge``:
-
-.. code-block:: shell
-
-    $ mamba install -c conda-forge fits_schema
-
-
 
 Developer Setup
 ===============
