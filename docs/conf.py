@@ -83,3 +83,5 @@ html_theme_options = dict(
 html_static_path = []
 
 numpydoc_show_class_members = False
+
+add_module_names = False
