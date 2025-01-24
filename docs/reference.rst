@@ -2,11 +2,10 @@
  API Reference
 ===============
 
+.. currentmodule:: fits_schema
 
 Headers
 =======
-
-.. currentmodule:: fits_schema.header
 
 .. automodule:: fits_schema.header
    :members:
@@ -14,7 +13,11 @@ Headers
 Binary Tables
 =============
 
-.. currentmodule:: fits_schema.binary_table
-
 .. automodule:: fits_schema.binary_table
+   :members:
+
+Validation Exceptions
+=====================
+
+.. automodule:: fits_schema.exceptions
    :members:
