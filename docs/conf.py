@@ -65,7 +65,7 @@ nitpick_ignore = [
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme = "ctao"
+html_theme = "pydata_sphinx_theme"
 html_theme_options = dict(
     navigation_with_keys=False,
     # setup for displaying multiple versions, also see setup in .gitlab-ci.yml
