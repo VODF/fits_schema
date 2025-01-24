@@ -1,22 +1,20 @@
 """FITS Schema."""
 
+from . import exceptions
 from .binary_table import (
     BinaryTable,
     BinaryTableHeader,
+    BitField,
+    ComplexDouble,
+    ComplexFloat,
+    Double,
+    Float,
     Int16,
     Int32,
     Int64,
-    Float,
-    ComplexFloat,
-    Double,
-    ComplexDouble,
     Table,
-    BitField,
 )
-
 from .header import HeaderCard, HeaderSchema
-from . import exceptions
-
 from .version import __version__
 
 __all__ = [
