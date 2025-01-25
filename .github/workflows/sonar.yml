@@ -35,7 +35,7 @@ jobs:
                run_id: context.payload.workflow_run.id,
             });
             let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-              return artifact.name == "ctapipe-coverage-report"
+              return artifact.name == "coverage-report"
             })[0];
             let download = await github.rest.actions.downloadArtifact({
                owner: context.repo.owner,
@@ -44,10 +44,10 @@ jobs:
                archive_format: 'zip',
             });
             let fs = require('fs');
-            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/ctapipe-coverage-report.zip`, Buffer.from(download.data));
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/coverage-report.zip`, Buffer.from(download.data));
 
       - name: 'Unzip code coverage'
-        run: unzip ctapipe-coverage-report.zip -d coverage
+        run: unzip coverage-report.zip -d coverage
 
       - name: Check artifact
         run: ls -l coverage
