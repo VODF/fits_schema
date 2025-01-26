@@ -102,7 +102,7 @@ jobs:
             coverage.xml
             sonar_env
 
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v5
         if: contains(matrix.extra-args, 'codecov')
 
   docs:
