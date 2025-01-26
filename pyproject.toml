@@ -40,12 +40,13 @@ test = [
 doc = [
   "sphinx",
   "numpydoc",
-  "ctao-sphinx-theme",
+  "pydata-sphinx-theme",
   "sphinx-changelog",
 ]
 dev = [
   "setuptools_scm",
   "towncrier",
+  "sphinx-autobuild",
 ]
 
 # we can use self-references to simplify all, needs to match project.name defined above

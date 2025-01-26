@@ -21,3 +21,6 @@ help:
 clean:
 	rm -rf docs/api
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+dev:
+	@sphinx-autobuild "$(SOURCEDIR)" --watch .. "$(BUILDDIR)" $(SPHINXOPTS) $(O)
