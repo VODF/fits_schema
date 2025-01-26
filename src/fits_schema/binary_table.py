@@ -251,7 +251,21 @@ class BinaryTableMeta(type):
 
 
 class BinaryTable(metaclass=BinaryTableMeta):
-    """Schema definition class for a binary table."""
+    """Schema definition class for a binary table.
+    
+    Examples
+    --------
+    >>> from fits_schema.binary_table import BinaryTable, BinaryTableHeader
+    >>> from fits_schema.binary_table import Float, Int32
+    >>> from fits_schema.header import HeaderCard
+    >>>
+    >>> class Events(BinaryTable):
+    ...    EVENT_ID = Int32()
+    ...    ENERGY   = Float(unit="TeV")
+    ...
+    ...    class __header__(BinaryTableHeader):
+    ...        HDUCLASS = HeaderCard(required=True, allowed_values="Events")
+    """
 
     def __init__(self, **column_data):
         self.__data__ = {}

@@ -201,14 +201,11 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
 
     Examples
     --------
-    >>> from fits_schema.binary_table import BinaryTable, Int32
     >>> from fits_schema.header import HeaderSchema, HeaderCard
     >>>
-    >>> class Events(BinaryTable):
-    ...    EVENT_ID = Int32()
-    ...
-    ...    class __header__(HeaderSchema):
-    ...        HDUCLASS = HeaderCard(required=True, allowed_values="Events")
+    >>> class MyHeaderSchema(HeaderSchema):
+    ...     FOO = HeaderCard(required=True, type_=int)
+    ...     BAR = HeaderCard(required=True, type_=str)  # doctest: +SKIP
     """
 
     @classmethod

@@ -10,7 +10,7 @@ A library for defining and documenting FITS file format schemas.
     :caption: Contents:
 
     installation
-    reference
+    reference/index
     changelog
 
 
