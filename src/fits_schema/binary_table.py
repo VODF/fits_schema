@@ -252,7 +252,7 @@ class BinaryTableMeta(type):
 
 class BinaryTable(metaclass=BinaryTableMeta):
     """Schema definition class for a binary table.
-    
+
     Examples
     --------
     >>> from fits_schema.binary_table import BinaryTable, BinaryTableHeader
