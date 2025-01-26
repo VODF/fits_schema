@@ -68,6 +68,9 @@ nitpick_ignore = [
 html_theme = "pydata_sphinx_theme"
 html_theme_options = dict(
     navigation_with_keys=False,
+    logo=dict(
+        text="fits-schema",
+    ),
     # setup for displaying multiple versions, also see setup in .gitlab-ci.yml
     ## Disable version switcher for now until we have a place to host the pages
     # switcher=dict(

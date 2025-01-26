@@ -3,7 +3,7 @@ requires = ["setuptools>=65", "setuptools_scm[toml]>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fits_schema"
+name = "fits-schema"
 description = ""
 readme = "README.md"
 license = {text = "BSD-3-Clause"}

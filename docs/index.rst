@@ -1,5 +1,5 @@
-fits_schema Documentation
-============================
+fits-schema Documentation
+=========================
 
 A library for defining and documenting FITS file format schemas.
 
