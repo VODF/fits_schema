@@ -1,29 +1,51 @@
-'''
-Schema definitions for FITS binary table extensions
+"""
+Schema definitions for FITS binary table extensions.
 
 See section 7.3 of the FITS standard:
 https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
-'''
+"""
+
+import logging
 from abc import ABCMeta, abstractmethod
-import numpy as np
+
 import astropy.units as u
+import numpy as np
 from astropy.io import fits
 from astropy.table import Table
-import logging
 
-from .header import HeaderSchema, HeaderCard, HeaderSchemaMeta
 from .exceptions import (
-    WrongUnit, WrongDims, WrongType, RequiredMissing, WrongShape,
+    RequiredMissing,
+    WrongDims,
+    WrongShape,
+    WrongType,
+    WrongUnit,
 )
+from .header import HeaderCard, HeaderSchema
 from .utils import log_or_raise
 
+__all__ = [
+    "BinaryTableHeader",
+    "Column",
+    "BinaryTable",
+    "Bool",
+    "Byte",
+    "Int16",
+    "Int32",
+    "Int64",
+    "Char",
+    "Float",
+    "Double",
+    "ComplexFloat",
+    "ComplexDouble",
+]
 
 log = logging.getLogger(__name__)
 
 
 class BinaryTableHeader(HeaderSchema):
-    '''default binary table header schema'''
-    XTENSION = HeaderCard(allowed_values='BINTABLE', position=0)
+    """Default binary table header schema."""
+
+    XTENSION = HeaderCard(allowed_values="BINTABLE", position=0)
     BITPIX = HeaderCard(allowed_values=8, position=1)
     NAXIS = HeaderCard(allowed_values=2, position=2)
     NAXIS1 = HeaderCard(type_=int, position=3)
@@ -35,9 +57,7 @@ class BinaryTableHeader(HeaderSchema):
 
 
 class Column(metaclass=ABCMeta):
-    '''
-    A column descriptor for columns consisting of a primitive data type
-    or fixed shape array.
+    """A binary table column descriptor.
 
     Attributes
     ----------
@@ -51,19 +71,21 @@ class Column(metaclass=ABCMeta):
         Use to specify a different column name than the class attribute name.
     ndim: int
         Dimensionality of a single row, numbers have ndim=0.
-        The resulting data column has `ndim_col = ndim + 1`
+        The resulting data column has ``ndim_col = ndim + 1``
     shape: Tuple[int]
         Shape of a single row.
-    '''
+    """
+
     def __init__(
-        self, *,
+        self,
+        *,
         unit=None,
         strict_unit=False,
         required=True,
         name=None,
         ndim=None,
         shape=None,
-        description: str="",
+        description: str = "",
     ):
         self.required = required
         self.unit = unit
@@ -79,13 +101,14 @@ class Column(metaclass=ABCMeta):
             if self.ndim is None:
                 self.ndim = len(self.shape)
             elif self.ndim != len(self.shape):
-                raise ValueError(f'Shape={shape} and ndim={ndim} do not match')
+                raise ValueError(f"Shape={shape} and ndim={ndim} do not match")
         else:
             # simple column by default
             if self.ndim is None:
                 self.ndim = 0
 
     def __get__(self, instance, owner=None):
+        """Get data."""
         # class attribute access
         if instance is None:
             return self
@@ -93,38 +116,43 @@ class Column(metaclass=ABCMeta):
         return instance.__data__.get(self.name)
 
     def __set__(self, instance, value):
+        """Set data."""
         instance.__data__[self.name] = value
 
     def __set_name__(self, owner, name):
+        """Rename variable (protocol)."""
         # respect user override for names that are not valid identifiers
         if self.name is None:
             self.name = name
 
     def __delete__(self, instance):
-        '''clear data of this column'''
+        """Clear data of this column."""
         if self.name in instance.__data__:
             del instance.__data__[self.name]
 
     def __repr__(self):
-        unit = f'\'{self.unit.to_string("fits")}\'' if self.unit is not None else None
+        """Representation of the class."""
+        unit = f"'{self.unit.to_string('fits')}'" if self.unit is not None else None
         return (
-            f'{self.__class__.__name__}('
+            f"{self.__class__.__name__}("
             f"name={self.name!r}, required={self.required}, unit={unit}"
-            ')'
+            ")"
         )
 
     @property
     @abstractmethod
     def dtype():
-        '''Equivalent numpy dtype'''
+        """Equivalent numpy dtype."""
 
-    def validate_data(self, data, onerror='raise'):
-        ''' Validate the data of this column in table '''
+    def validate_data(self, data, onerror="raise"):
+        """Validate the data of this column in table."""
         if data is None:
             if self.required:
                 log_or_raise(
-                    f'Column {self.name} is required but missing',
-                    RequiredMissing, log=log, onerror=onerror
+                    f"Column {self.name} is required but missing",
+                    RequiredMissing,
+                    log=log,
+                    onerror=onerror,
                 )
             else:
                 return
@@ -133,25 +161,31 @@ class Column(metaclass=ABCMeta):
         try:
             # casting = 'safe' makes sure we don't change values
             # e.g. casting doubles to integers will no longer work
-            data = np.asanyarray(data).astype(self.dtype, casting='safe')
+            data = np.asanyarray(data).astype(self.dtype, casting="safe")
         except TypeError as e:
             log_or_raise(
-                f'dtype not convertible to column dtype: {e}',
-                WrongType, log=log, onerror=onerror
+                f"dtype not convertible to column dtype: {e}",
+                WrongType,
+                log=log,
+                onerror=onerror,
             )
 
-        if self.strict_unit and hasattr(data, 'unit') and data.unit != self.unit:
+        if self.strict_unit and hasattr(data, "unit") and data.unit != self.unit:
             log_or_raise(
-                f'Unit {data.unit} of data does not match specified unit {self.unit}',
-                WrongUnit, log=log, onerror=onerror,
+                f"Unit {data.unit} of data does not match specified unit {self.unit}",
+                WrongUnit,
+                log=log,
+                onerror=onerror,
             )
 
         # a table as one dimension more than it's rows,
         # we also allow a single scalar value for scalar rows
         if data.ndim != self.ndim + 1 and not (data.ndim == 0 and self.ndim == 0):
             log_or_raise(
-                f'Dimensionality of rows is {data.ndim - 1}, should be {self.ndim}',
-                WrongDims, log=log, onerror=onerror,
+                f"Dimensionality of rows is {data.ndim - 1}, should be {self.ndim}",
+                WrongDims,
+                log=log,
+                onerror=onerror,
             )
 
         # the rest of the tests is done on a quantity object with correct dtype
@@ -165,55 +199,73 @@ class Column(metaclass=ABCMeta):
         shape = q.shape[1:]
         if self.shape is not None and self.shape != shape:
             log_or_raise(
-                f'Shape {shape} does not match required shape {self.shape}',
-                WrongShape, log=log, onerror=onerror,
+                f"Shape {shape} does not match required shape {self.shape}",
+                WrongShape,
+                log=log,
+                onerror=onerror,
             )
 
         return q
 
 
 class BinaryTableMeta(type):
-    '''Metaclass for the BinaryTable class'''
-    def __new__(cls, name, bases, dct):
-        dct['__columns__'] = {}
-        dct['__slots__'] = ('__data__', 'header')
+    """Metaclass for the BinaryTable class."""
 
-        header_schema = dct.get('__header__', None)
-        if header_schema is not None and not issubclass(header_schema, BinaryTableHeader):
+    def __new__(cls, name, bases, dct):
+        """Create class."""
+        dct["__columns__"] = {}
+        dct["__slots__"] = ("__data__", "header")
+
+        header_schema = dct.get("__header__", None)
+        if header_schema is not None and not issubclass(
+            header_schema, BinaryTableHeader
+        ):
             raise TypeError(
-                '`__header__` must be a class inheriting from `BinaryTableHeader`'
+                "`__header__` must be a class inheriting from `BinaryTableHeader`"
             )
 
         # ensure we have a __header__ if not specified
         if not header_schema:
-            dct['__header__'] = BinaryTableHeader()
+            dct["__header__"] = BinaryTableHeader()
 
         # inherit header schema and  from bases
         for base in reversed(bases):
-            if hasattr(base, '__header__'):
-                dct['__header__'].update(base.__header__)
+            if hasattr(base, "__header__"):
+                dct["__header__"].update(base.__header__)
 
             if issubclass(base, BinaryTable):
-                dct['__columns__'].update(base.__columns__)
+                dct["__columns__"].update(base.__columns__)
 
         # collect columns of this new schema
         for k, v in dct.items():
             if isinstance(v, Column):
                 k = v.name or k
-                dct['__columns__'][k] = v
+                dct["__columns__"][k] = v
 
         if header_schema is not None:
             # add user defined header last
-            dct['__header__'].update(header_schema)
+            dct["__header__"].update(header_schema)
 
         new_cls = super().__new__(cls, name, bases, dct)
         return new_cls
 
 
 class BinaryTable(metaclass=BinaryTableMeta):
-    '''
-    Schema definition class for a binary table
-    '''
+    """Schema definition class for a binary table.
+
+    Examples
+    --------
+    >>> from fits_schema.binary_table import BinaryTable, BinaryTableHeader
+    >>> from fits_schema.binary_table import Float, Int32
+    >>> from fits_schema.header import HeaderCard
+    >>>
+    >>> class Events(BinaryTable):
+    ...    EVENT_ID = Int32()
+    ...    ENERGY   = Float(unit="TeV")
+    ...
+    ...    class __header__(BinaryTableHeader):
+    ...        HDUCLASS = HeaderCard(required=True, allowed_values="Events")
+    """
 
     def __init__(self, **column_data):
         self.__data__ = {}
@@ -223,25 +275,27 @@ class BinaryTable(metaclass=BinaryTableMeta):
             setattr(self, k, v)
 
     def validate_data(self):
+        """Check that data matches schema."""
         for k, col in self.__columns__.items():
             validated = col.validate_data(self.__data__.get(k))
             if validated is not None:
                 setattr(self, k, validated)
 
     @classmethod
-    def validate_hdu(cls, hdu: fits.BinTableHDU, onerror='raise'):
+    def validate_hdu(cls, hdu: fits.BinTableHDU, onerror="raise"):
+        """Check that HDU matches schema."""
         if not isinstance(hdu, fits.BinTableHDU):
-            raise TypeError('hdu is not a BinTableHDU')
+            raise TypeError("hdu is not a BinTableHDU")
 
         cls.__header__.validate_header(hdu.header, onerror=onerror)
         required = set(c.name for c in cls.__columns__.values() if c.required)
         missing = required - set(c.name for c in hdu.columns)
         if missing:
             log_or_raise(
-                f'The following required columns are missing {missing}',
+                f"The following required columns are missing {missing}",
                 RequiredMissing,
                 log=log,
-                onerror=onerror
+                onerror=onerror,
             )
 
         table = Table.read(hdu)
@@ -251,66 +305,77 @@ class BinaryTable(metaclass=BinaryTableMeta):
 
 
 class Bool(Column):
-    '''A Boolean binary table column'''
-    tform_code = 'L'
+    """A Boolean binary table column."""
+
+    tform_code = "L"
     dtype = bool
 
 
 class BitField(Column):
-    '''Bitfield binary table column'''
-    tform_code = 'X'
+    """Bitfield binary table column."""
+
+    tform_code = "X"
     dtype = bool
 
 
 class Byte(Column):
-    '''Byte binary table column'''
-    tform_code = 'B'
+    """Byte binary table column."""
+
+    tform_code = "B"
     dtype = np.uint8
 
 
 class Int16(Column):
-    '''16 Bit signed integer binary table column'''
-    tform_code = 'I'
+    """16 Bit signed integer binary table column."""
+
+    tform_code = "I"
     dtype = np.int16
 
 
 class Int32(Column):
-    '''32 Bit signed integer binary table column'''
-    tform_code = 'J'
+    """32 Bit signed integer binary table column."""
+
+    tform_code = "J"
     dtype = np.int32
 
 
 class Int64(Column):
-    '''64 Bit signed integer binary table column'''
-    tform_code = 'K'
+    """64 Bit signed integer binary table column."""
+
+    tform_code = "K"
     dtype = np.int64
 
 
 class Char(Column):
-    '''Single byte character binary table column'''
-    tform_code = 'A'
-    dtype = np.dtype('S1')
+    """Single byte character binary table column."""
+
+    tform_code = "A"
+    dtype = np.dtype("S1")
 
 
 class Float(Column):
-    '''Single precision floating point binary table column'''
-    tform_code = 'E'
+    """Single precision floating point binary table column."""
+
+    tform_code = "E"
     dtype = np.float32
 
 
 class Double(Column):
-    '''Single precision floating point binary table column'''
-    tform_code = 'D'
+    """Single precision floating point binary table column."""
+
+    tform_code = "D"
     dtype = np.float64
 
 
 class ComplexFloat(Column):
-    '''Single precision complex binary table column'''
-    tform_code = 'C'
+    """Single precision complex binary table column."""
+
+    tform_code = "C"
     dtype = np.csingle
 
 
 class ComplexDouble(Column):
-    '''Single precision complex binary table column'''
-    tform_code = 'M'
+    """Single precision complex binary table column."""
+
+    tform_code = "M"
     dtype = np.cdouble

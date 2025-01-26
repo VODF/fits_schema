@@ -2,12 +2,15 @@
 
 """Definitions from the FITS standard, for schema validation."""
 
-from .header import HeaderSchema, HeaderCard
+from .header import HeaderCard, HeaderSchema
 
 __all__ = ["FITSStandardHeaders"]
 
+
 class FITSStandardHeaders(HeaderSchema):
-    """Optional Headers defined by the `FITS Standard v4.0
+    """FITS standard headers.
+
+    Optional Headers defined by the `FITS Standard v4.0
     <https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf>`.
     """
 

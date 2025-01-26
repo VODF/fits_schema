@@ -1,34 +1,40 @@
-'''
+"""
 Schema definitions for FITS Headers.
 
 See section 4 of the FITS Standard:
 https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
-'''
-from datetime import date, datetime
-from typing import Self
-from .exceptions import (
-    RequiredMissing, WrongType, WrongPosition, AdditionalHeaderCard,
-    WrongValue,
-)
+"""
+
+import logging
 import re
 from collections.abc import Iterable
-from astropy.io import fits
-import logging
+from datetime import date, datetime
+from typing import Self
 
+from astropy.io import fits
+
+from .exceptions import (
+    AdditionalHeaderCard,
+    RequiredMissing,
+    WrongPosition,
+    WrongType,
+    WrongValue,
+)
 from .utils import log_or_raise
 
+__all__ = ["HeaderSchema", "HeaderCard"]
 
 log = logging.getLogger(__name__)
 
 
 HEADER_ALLOWED_TYPES = (str, bool, int, float, complex, date, datetime)
-TABLE_KEYWORDS = {'TTYPE', 'TUNIT', 'TFORM', 'TSCAL', 'TZERO', 'TDISP', 'TDIM'}
+TABLE_KEYWORDS = {"TTYPE", "TUNIT", "TFORM", "TSCAL", "TZERO", "TDISP", "TDIM"}
 IGNORE = TABLE_KEYWORDS
 
 
 class HeaderCard:
-    '''
-    Schema for the entry of a FITS header
+    """
+    Schema for the entry of a FITS header.
 
     Attributes
     ----------
@@ -48,11 +54,19 @@ class HeaderCard:
         if None, no check if a value is present is performed
     case_insensitive: True
         match str values case insensitively
-    '''
+    """
+
     def __init__(
-        self, keyword=None, *,  description: str = "", required=True,
-        allowed_values=None, position=None, type_=None,
-        empty=None, case_insensitive=True,
+        self,
+        keyword=None,
+        *,
+        description: str = "",
+        required=True,
+        allowed_values=None,
+        position=None,
+        type_=None,
+        empty=None,
+        case_insensitive=True,
     ):
         self.keyword = None
         if keyword is not None:
@@ -75,7 +89,7 @@ class HeaderCard:
                 vals = set(v.upper() if isinstance(v, str) else v for v in vals)
 
             if not all(isinstance(v, HEADER_ALLOWED_TYPES) for v in vals):
-                raise ValueError(f'Values must be instances of {HEADER_ALLOWED_TYPES}')
+                raise ValueError(f"Values must be instances of {HEADER_ALLOWED_TYPES}")
 
         self.type = type_
         if type_ is not None:
@@ -85,7 +99,9 @@ class HeaderCard:
             # check that value and type match if both supplied
             if vals is not None:
                 if any(not isinstance(v, type_) for v in vals):
-                    raise TypeError(f'`values` must be of type `type_`({type_}) or None')
+                    raise TypeError(
+                        f"`values` must be of type `type_`({type_}) or None"
+                    )
         else:
             # if only value is supplied, deduce type from value
             if vals is not None:
@@ -94,35 +110,33 @@ class HeaderCard:
         self.allowed_values = vals
 
     def __set_name__(self, owner, name):
+        """Rename to keyword if existing and check name style."""
         if self.keyword is None:
             if len(name) > 8:
-                raise ValueError('FITS header keywords must be 8 characters or shorter')
+                raise ValueError("FITS header keywords must be 8 characters or shorter")
 
-            if not re.match(r'^[A-Z0-9\-_]{1,8}$', name):
+            if not re.match(r"^[A-Z0-9\-_]{1,8}$", name):
                 raise ValueError(
-                    'FITS header keywords must only contain'
-                    ' ascii uppercase, digit, _ or -'
+                    "FITS header keywords must only contain"
+                    " ascii uppercase, digit, _ or -"
                 )
             self.keyword = name
 
-    def validate(self, card, pos, onerror='raise'):
-        '''Validate an astropy.io.fits.card.Card'''
+    def validate(self, card, pos, onerror="raise"):
+        """Validate an astropy.io.fits.card.Card."""
         valid = True
         k = self.keyword
 
         if self.position is not None and self.position != pos:
             valid = False
-            msg = (
-                f'Expected card {k} at position {self.position}'
-                f' but found at {pos}'
-            )
+            msg = f"Expected card {k} at position {self.position} but found at {pos}"
             log_or_raise(msg, WrongPosition, log, onerror=onerror)
 
         if self.type is not None and not isinstance(card.value, self.type):
             valid = False
             msg = (
-                f'Header keyword {k} has wrong type {type(card.value)}'
-                f', expected one of {self.type}'
+                f"Header keyword {k} has wrong type {type(card.value)}"
+                f", expected one of {self.type}"
             )
             log_or_raise(msg, WrongType, log, onerror=onerror)
 
@@ -133,87 +147,94 @@ class HeaderCard:
                 val = card.value
             if val not in self.allowed_values:
                 log_or_raise(
-                    f'Possible values for {k!r} are {self.allowed_values}'
-                    f', found {card.value!r}',
+                    f"Possible values for {k!r} are {self.allowed_values}"
+                    f", found {card.value!r}",
                     WrongValue,
                     log,
-                    onerror=onerror
+                    onerror=onerror,
                 )
 
         has_value = not (card.value is None or isinstance(card.value, fits.Undefined))
         if self.empty is True and has_value:
             log_or_raise(
-                f'Card {k} is required to be empty but has value {card.value}',
-                WrongValue, log, onerror,
+                f"Card {k} is required to be empty but has value {card.value}",
+                WrongValue,
+                log,
+                onerror,
             )
 
         if self.empty is False and not has_value:
-            log_or_raise(f'Card {k} exists but has no value', WrongValue, log, onerror)
+            log_or_raise(f"Card {k} exists but has no value", WrongValue, log, onerror)
 
         return valid
 
 
 class HeaderSchemaMeta(type):
+    """Metaclass for HeaderSchema."""
+
     def __new__(cls, name, bases, dct):
-        dct['__cards__'] = {}
-        dct['__slots__'] = tuple()
+        """Instantiate and check a HeaderSchema."""
+        dct["__cards__"] = {}
+        dct["__slots__"] = tuple()
 
         for base in reversed(bases):
             if issubclass(base, HeaderSchema):
-                dct['__cards__'].update(base.__cards__)
+                dct["__cards__"].update(base.__cards__)
 
         for k, v in dct.items():
             if isinstance(v, HeaderCard):
                 k = v.keyword or k  # use user override for keyword if there
-                dct['__cards__'][k] = v
+                dct["__cards__"][k] = v
 
         new_cls = super().__new__(cls, name, bases, dct)
         return new_cls
 
 
 class HeaderSchema(metaclass=HeaderSchemaMeta):
-    '''
-    Schema definition for the header of a FITS HDU
+    """
+    Schema definition for the header of a FITS HDU.
 
-    To be added as `class __header_schema__(HeaderSchema)` to HDU schema classes.
+    To be added as ``class __header__(HeaderSchema)`` to HDU schema classes.
 
-    Add `Card` class members to define the schema.
+    Add `HeaderCard` class members to define the schema.
 
 
-    Example
-    -------
-    >>> from fits_schema.binary_table import BinaryTable, Int32
+    Examples
+    --------
     >>> from fits_schema.header import HeaderSchema, HeaderCard
     >>>
-    >>> class Events(BinaryTable):
-    ...    EVENT_ID = Int32()
-    ...
-    ...    class __header_schema__(HeaderSchema):
-    ...        HDUCLASS = HeaderCard(required=True, allowed_values="Events")
-    '''
+    >>> class MyHeaderSchema(HeaderSchema):
+    ...     FOO = HeaderCard(required=True, type_=int)
+    ...     BAR = HeaderCard(required=True, type_=str)  # doctest: +SKIP
+    """
 
     @classmethod
     def _header_schemas(cls) -> list[Self]:
-        """returns a list of HeaderSchema parents"""
-        return list(reversed([cls,] + [base for base in cls.__bases__ if issubclass(base, HeaderSchema)]))
+        """Return a list of HeaderSchema parents."""
+        return list(
+            reversed(
+                [
+                    cls,
+                ]
+                + [base for base in cls.__bases__ if issubclass(base, HeaderSchema)]
+            )
+        )
 
     @classmethod
-    def grouped_cards(cls) -> dict[Self,list[HeaderCard]]:
-        """Return a list of cards grouped by parent HeaderSchema class"""
+    def grouped_cards(cls) -> dict[Self, list[HeaderCard]]:
+        """Return a list of cards grouped by parent HeaderSchema class."""
         seen = set()
         group = {}
 
         for schema in cls._header_schemas():
-            group[schema] = {k: c for k,c in schema.__cards__.items() if k not in seen}
+            group[schema] = {k: c for k, c in schema.__cards__.items() if k not in seen}
             seen.update(schema.__cards__.keys())
 
         return group
 
-
-
     @classmethod
-    def validate_header(cls, header: fits.Header, onerror='raise'):
-
+    def validate_header(cls, header: fits.Header, onerror="raise"):
+        """Check a header against the schema."""
         required = {k for k, c in cls.__cards__.items() if c.required}
         missing = required - set(header.keys())
 
@@ -221,19 +242,21 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
         if missing:
             log_or_raise(
                 f"Header is missing the following required keywords: {missing}",
-                RequiredMissing, log=log, onerror=onerror,
+                RequiredMissing,
+                log=log,
+                onerror=onerror,
             )
 
         # no go through each of the header items and validate them with the schema
         for pos, card in enumerate(header.cards):
             kw = card.keyword
             if kw not in cls.__cards__:
-                if kw.rstrip('0123456789') not in IGNORE:
+                if kw.rstrip("0123456789") not in IGNORE:
                     log_or_raise(
                         f'Unexpected header card "{str(card).strip()}"',
                         AdditionalHeaderCard,
                         log=log,
-                        onerror=onerror
+                        onerror=onerror,
                     )
                 continue
 
@@ -241,4 +264,5 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
 
     @classmethod
     def update(cls, other_schema):
+        """Update cards."""
         cls.__cards__.update(other_schema.__cards__)

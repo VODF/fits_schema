@@ -1,6 +1,175 @@
 [build-system]
-# required packages *at build time*
-requires = ["setuptools", "wheel"]
-
-# the function e.g. pip will call to build our project.
+requires = ["setuptools>=65", "setuptools_scm[toml]>=8"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "fits-schema"
+description = ""
+readme = "README.md"
+license = {text = "BSD-3-Clause"}
+authors = [
+    {name = "Maximilian Linhoff", email = "maximilian.linhoff@cta-observatory.org"},
+    {name = "Karl Kosack", email="karl.kosack@cea.fr"},
+]
+
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "astropy >=6",
+]
+
+# needed for setuptools_scm, we don"t define a static version
+dynamic = ["version"]
+
+[project.urls]
+repository = "https://github.com/VODF/fits_schema"
+documentation = "https://github.com/VODF/fits_schema"
+
+# Command-line scripts mapping the name of the tool to the import and function to execute
+[project.scripts]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["fits_schema._dev_version"]
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-cov",
+]
+doc = [
+  "sphinx",
+  "numpydoc",
+  "pydata-sphinx-theme",
+  "sphinx-changelog",
+]
+dev = [
+  "setuptools_scm",
+  "towncrier",
+  "sphinx-autobuild",
+]
+
+# we can use self-references to simplify all, needs to match project.name defined above
+all = [
+  "fits_schema[test,doc,dev]",
+]
+
+[tool.setuptools_scm]
+write_to = "src/fits_schema/_version.py"
+
+[tool.towncrier]
+package = "fits_schema"
+directory = "docs/changes"
+filename = "CHANGES.rst"
+template = "docs/changes/template.rst"
+underlines = ["-", "~", "^"]
+# Let towncrier create proper links to the merged MR.
+# By default, towncrier connects everything to issues.
+# We rather want to connect it to merge request
+issue_format = "`!{issue} <https://https://github.com/VODF/fits_schema/issues/{issue}>`__"
+
+[tool.towncrier.fragment.feature]
+    name = "New Features"
+    showcontent = true
+
+[tool.towncrier.fragment.bugfix]
+    name = "Bug Fixes"
+    showcontent = true
+
+[tool.towncrier.fragment.api]
+    name = "API Changes"
+    showcontent = true
+
+[tool.towncrier.fragment.optimization]
+    name = "Refactoring and Optimization"
+    showcontent = true
+
+[tool.towncrier.fragment.maintenance]
+    name = "Maintenance"
+    showcontent = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+
+[tool.ruff.lint]
+extend-select = [
+    "I", # isort
+    "N", # pep8 naming
+    "D", # pydocstyle
+    "NPY", # numpy
+    "PT", # pytest
+    "UP", # pyupgrade
+    "COM", # flake8-commas
+    "ISC", # implicit string concat rules
+    "ICN", # import name conventions
+    "G", # logging
+]
+ignore = [
+    "COM812", # incompatible with ruff format
+    "ISC001", # incompatible with ruff format
+    "N818", # naming of exceptions ok
+    "N801", # to allow __header__ classes
+    "PT011", # pytest.raises(ValueError) too broad
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+# no documentation linting for test files
+"**/tests/**" = ["D"]
+"**/tests_*.py" = ["D"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.coverage.run]
+relative_files = true
+source = ["src"]
+omit = [
+    "src/fits_schema/_version.py",
+    "src/fits_schema/_dev_version/*"
+]
+
+[tool.pytest.ini_options]
+minversion = "7"
+testpaths = ["src"]
+log_cli_level = "INFO"
+xfail_strict = true
+# print summary of failed tests, force errors if settings are misspelled
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+filterwarnings = [
+    "error",
+    # this warning should not be turned into an error, will happen e.g. when
+    # using wheels compiled against an older version of numpy then is used at runtime
+    # left as warning as the other direction (compiled vs. newer, using older numpy) is
+    # problematic
+    "default:numpy.ndarray size changed:RuntimeWarning"
+]
+
+
+[tool.repo-review]
+select = ["PY", "PP", "PC"]
+ignore = [
+    "PY007", # we do not use tox for now
+    "PC140", # mypy is not used
+    "PC170", # pygrep is not used
+    "PC180", # prettier is not used
+    "PC111", # blacken-docs is not used
+    "PC901", # no CI setup currently for updating pre-commit hooks
+]
+
+# fits files are sometimes mistaken for text files as they start with an ASCII header
+# we need to ignore them here
+[tool.codespell]
+ignore-words-list = "referenc" # codespell:ignore
+skip = "*.fits,*.fits.fz,.codespell-ignore"

@@ -1,34 +1,127 @@
 name: CI
 
-on: [push, pull_request]
+# by not building all branches on push, we avoid the duplicated builds in PRs
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "**"
+  pull_request:
 
 env:
-  MPLBACKEND: Agg
   PYTEST_ADDOPTS: --color=yes
 
 jobs:
-  tests:
+  static-code-checks:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: --all-files
+
+  tests:
     strategy:
       matrix:
-        python-version: ["3.11","3.12", "3.13"]
+        include:
+          # linux builds
+          - python-version: "3.11"
+            os: ubuntu-latest
+
+          - python-version: "3.12"
+            os: ubuntu-latest
+
+          - python-version: "3.13"
+            os: ubuntu-latest
+            extra-args: ["codecov"]
+
+          # macos builds
+          - python-version: "3.12"
+            os: macos-latest
+
+          - python-version: "3.13"
+            os: macos-latest
+
+    runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
+      - name: Update pip
         run: |
-          pip install -U pip
-          pip install ".[all]"
+          python -m pip install --upgrade pip
 
-      - name: Tests
+      - name: Build the package
         run: |
-          python -m pytest \
-            --doctest-modules \
-            --cov fits_schema --cov-report=xml \
-            tests fits_schema
+          pip install build
+          python -m build
+
+      - name: Install the package
+        run: pip install .[test]
+
+      - name: Install the package in editable mode
+        run: pip install --editable .[test]
+
+      - name: Test with pytest
+        run: |
+          pytest --cov --cov-report=xml --cov-branch \
+            --doctest-modules -v
+
+      - name: Store info for sonar
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SOURCE_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
+          TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
+        run: |
+          echo "PR_NUMBER=${PR_NUMBER}" >> sonar_env
+          echo "SOURCE_REPOSITORY=${SOURCE_REPOSITORY}" >> sonar_env
+          echo "SOURCE_BRANCH=${SOURCE_BRANCH}" >> sonar_env
+          echo "TARGET_BRANCH=${TARGET_BRANCH}" >> sonar_env
+          cat sonar_env
+
+      # upload coverage report for sonar workflow
+      - uses: actions/upload-artifact@v4
+        if: contains(matrix.extra-args, 'codecov') && contains(github.event.pull_request.labels.*.name, 'documentation-only') == false
+        with:
+          name: coverage-report
+          path: |
+            coverage.xml
+            sonar_env
+
+      - uses: codecov/codecov-action@v3
+        if: contains(matrix.extra-args, 'codecov')
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install doc dependencies
+        run: |
+          pip install -e .[doc]
+          git describe --tags
+          python -c 'import fits_schema; print(fits_schema.__version__)'
+
+      - name: Build docs
+        run: make -C docs html SPHINXOPTS="-W --keep-going -n --color"
