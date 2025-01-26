@@ -194,7 +194,7 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
     """
     Schema definition for the header of a FITS HDU.
 
-    To be added as ``class __header_schema__(HeaderSchema)`` to HDU schema classes.
+    To be added as ``class __header__(HeaderSchema)`` to HDU schema classes.
 
     Add `HeaderCard` class members to define the schema.
 
@@ -207,7 +207,7 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
     >>> class Events(BinaryTable):
     ...    EVENT_ID = Int32()
     ...
-    ...    class __header_schema__(HeaderSchema):
+    ...    class __header__(HeaderSchema):
     ...        HDUCLASS = HeaderCard(required=True, allowed_values="Events")
     """
 
