@@ -26,7 +26,8 @@ class SchemaElement(metaclass=ABCMeta):
     #: if this item is optional, set to false
     required: bool = True
 
-    #: the unit that should be checked for compatibility
+    #: The unit associated with the element. For Columns, this will be verified if set,
+    #: for HeaderCards, it is only for documentation purposes.
     unit: Unit | None = None
 
     #: list of examples, for documentation
