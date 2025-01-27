@@ -5,15 +5,13 @@ See section 4 of the FITS Standard:
 https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
 """
 
-from dataclasses import dataclass
 import logging
 import re
 from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Self, Iterable, Tuple, Type
+from typing import Self
 
-
-from astropy import units as u
 from astropy.io import fits
 
 from .exceptions import (
@@ -23,9 +21,8 @@ from .exceptions import (
     WrongType,
     WrongValue,
 )
-from .utils import log_or_raise
-
 from .schema_element import SchemaElement
+from .utils import log_or_raise
 
 __all__ = ["HeaderSchema", "HeaderCard"]
 
@@ -36,19 +33,19 @@ HEADER_ALLOWED_TYPES = (str, bool, int, float, complex, date, datetime)
 TABLE_KEYWORDS = {"TTYPE", "TUNIT", "TFORM", "TSCAL", "TZERO", "TDISP", "TDIM"}
 IGNORE = TABLE_KEYWORDS
 
+
 @dataclass
 class HeaderCard(SchemaElement):
     """Schema for the entry of a FITS header."""
 
     allowed_values: Iterable | None = None
     position: int | None = None
-    type_: Type | Tuple[Type] | None = None
+    type_: type | tuple[type] | None = None
     empty: bool | None = None
     case_insensitive: bool = True
 
-
     def __post_init__(self):
-        #super().__post_init__()
+        # super().__post_init__()
 
         vals = self.allowed_values
         if vals is not None:
@@ -80,7 +77,6 @@ class HeaderCard(SchemaElement):
 
         self.allowed_values = vals
 
-
     def _check_name(self):
         """Ensure card name follows FITS conventions."""
         if self.name is not None:
@@ -92,7 +88,6 @@ class HeaderCard(SchemaElement):
                     "FITS header keywords must only contain"
                     " ascii uppercase, digit, _ or -"
                 )
-
 
     def validate(self, card, pos, onerror="raise"):
         """Validate an astropy.io.fits.card.Card."""

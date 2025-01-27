@@ -4,8 +4,9 @@
 
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
-from astropy.units import Unit
+
 from astropy.io.votable.ucd import check_ucd
+from astropy.units import Unit
 
 # collects all references used, useful for generating a citation list.
 _REFERENCE_SET = set()
@@ -40,8 +41,7 @@ class SchemaElement(metaclass=ABCMeta):
     ucd: str | None = None
 
     def __post_init__(self):
-        """check that the metadata keywords are as expected"""
-
+        """Check that the metadata keywords are as expected"""
         if not isinstance(self.description, str):
             raise ValueError("description should be a string")
 
