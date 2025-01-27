@@ -1,4 +1,4 @@
-# fits_schema
+# fits-schema
 [![CI](https://github.com/VODF/fits_schema/actions/workflows/ci.yml/badge.svg)](https://github.com/VODF/fits_schema/actions/workflows/ci.yml)
 [![Quality Gate Status](https://sonar-cta-dpps.zeuthen.desy.de/api/project_badges/measure?project=VODF_fits_schema_AZSNmvSdAfB1AuE28SGr&metric=alert_status&token=sqb_fa08e2cf40384be0a05c433de526b8d744e2ae30)](https://sonar-cta-dpps.zeuthen.desy.de/dashboard?id=VODF_fits_schema_AZSNmvSdAfB1AuE28SGr)
 [![Coverage](https://sonar-cta-dpps.zeuthen.desy.de/api/project_badges/measure?project=VODF_fits_schema_AZSNmvSdAfB1AuE28SGr&metric=coverage&token=sqb_fa08e2cf40384be0a05c433de526b8d744e2ae30)](https://sonar-cta-dpps.zeuthen.desy.de/dashboard?id=VODF_fits_schema_AZSNmvSdAfB1AuE28SGr)
