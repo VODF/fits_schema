@@ -40,6 +40,10 @@ class SchemaElement(metaclass=ABCMeta):
     #: IVOA uniform content descriptor string
     ucd: str | None = None
 
+    #: If this element is associated with an IVOA data model, provide the
+    #: ``ModelName.keyword``, for example ``ObsCore.obs_publisher_did``
+    ivoa_name: str | None = None
+
     def __post_init__(self):
         """Validate the schema keywords."""
         if not isinstance(self.description, str):
