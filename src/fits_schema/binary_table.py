@@ -120,11 +120,6 @@ class Column(SchemaElement, metaclass=ABCMeta):
         if self.name in instance.__data__:
             del instance.__data__[self.name]
 
-    @property
-    @abstractmethod
-    def dtype():
-        """Equivalent numpy dtype."""
-
     def validate_data(self, data, onerror="raise"):
         """Validate the data of this column in table."""
         if data is None:
