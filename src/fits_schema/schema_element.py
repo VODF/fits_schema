@@ -72,5 +72,4 @@ class SchemaElement(metaclass=ABCMeta):
     @abstractmethod
     def _check_name(self):
         """Check if the name is valid."""
-        print("CHECK NAME BASE")
         pass
