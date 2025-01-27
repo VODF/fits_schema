@@ -41,7 +41,7 @@ class SchemaElement(metaclass=ABCMeta):
     ucd: str | None = None
 
     def __post_init__(self):
-        """Check that the metadata keywords are as expected"""
+        """Validate the schema keywords."""
         if not isinstance(self.description, str):
             raise ValueError("description should be a string")
 

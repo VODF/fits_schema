@@ -45,6 +45,7 @@ class HeaderCard(SchemaElement):
     case_insensitive: bool = True
 
     def __post_init__(self):
+        """Validate the header schema."""
         # super().__post_init__()
 
         vals = self.allowed_values
