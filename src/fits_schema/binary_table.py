@@ -9,6 +9,7 @@ import logging
 import re
 from abc import ABCMeta
 from dataclasses import dataclass
+from warnings import warn
 
 import astropy.units as u
 import numpy as np
@@ -103,8 +104,8 @@ class Column(SchemaElement, metaclass=ABCMeta):
         """
         if self.name is not None:
             if not re.fullmatch("[a-zA-Z0-9_]+", self.name):
-                raise ValueError(
-                    f"The column named '{self.name}' should contain only letters, "
+                warn(
+                    f"The column named '{self.name}' is recommended to contain only letters, "
                     "numbers, and underscores."
                 )
 
