@@ -69,7 +69,8 @@ class HeaderCard(SchemaElement):
             if vals is not None:
                 if any(not isinstance(v, self.type_) for v in vals):
                     raise TypeError(
-                        f"`values` must be of type `type_`({self.type_}) or None"
+                        f"The type of `allowed_values` ({self.allowed_values}) "
+                        f"and `type_` ({self.type_}) do not agree."
                     )
         else:
             # if only value is supplied, deduce type from value
