@@ -23,7 +23,7 @@ def test_length():
             lowercas = HeaderCard()
 
     class DateHeader(HeaderSchema):
-        DATE_OBS = HeaderCard(keyword="DATE-OBS")
+        DATE_OBS = HeaderCard(name="DATE-OBS")
 
     assert "DATE-OBS" in DateHeader.__cards__
 
@@ -140,8 +140,8 @@ def test_inheritance():
         BAR = HeaderCard(type_=int)
 
     assert set(Header.__cards__) == set(BaseHeader.__cards__)
-    assert BaseHeader.BAR.type is str
-    assert Header.BAR.type is int
+    assert BaseHeader.BAR.type_ is str
+    assert Header.BAR.type_ is int
 
 
 def test_invalid_arguments():

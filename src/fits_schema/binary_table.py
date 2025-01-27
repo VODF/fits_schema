@@ -5,10 +5,13 @@ See section 7.3 of the FITS standard:
 https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
 """
 
+from dataclasses import dataclass
 import logging
 from abc import ABCMeta, abstractmethod
+from typing import Tuple, Type
 
 import astropy.units as u
+from astropy.units.decorators import NoneType
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
@@ -22,6 +25,7 @@ from .exceptions import (
 )
 from .header import HeaderCard, HeaderSchema
 from .utils import log_or_raise
+from .schema_element import SchemaElement
 
 __all__ = [
     "BinaryTableHeader",
@@ -55,8 +59,8 @@ class BinaryTableHeader(HeaderSchema):
     TFIELDS = HeaderCard(type_=int, position=7)
     EXTNAME = HeaderCard(required=False, type_=str)
 
-
-class Column(metaclass=ABCMeta):
+@dataclass
+class Column(SchemaElement, metaclass=ABCMeta):
     """A binary table column descriptor.
 
     Attributes
@@ -76,27 +80,24 @@ class Column(metaclass=ABCMeta):
         Shape of a single row.
     """
 
-    def __init__(
-        self,
-        *,
-        unit=None,
-        strict_unit=False,
-        required=True,
-        name=None,
-        ndim=None,
-        shape=None,
-        description: str = "",
-    ):
-        self.required = required
-        self.unit = unit
-        self.strict_unit = strict_unit
-        self.name = name
-        self.shape = shape
-        self.ndim = ndim
-        self.description = description
+    #: allow compatible units if False
+    strict_unit: bool = False
+
+    #: dimensionality of column
+    ndim: int | None = None
+
+    #: specify exact shape (length of each dimension)
+    shape: Tuple[int] | None = None
+
+    # the data type of the column
+    dtype: Type = None
+
+    def __post_init__(self):
+        """Check the schema."""
+        super().__post_init__()
 
         if self.shape is not None:
-            self.shape = tuple(shape)
+            self.shape = tuple(self.shape)
             # Dimensionality of the table is one more than that of a single row
             if self.ndim is None:
                 self.ndim = len(self.shape)
@@ -106,6 +107,12 @@ class Column(metaclass=ABCMeta):
             # simple column by default
             if self.ndim is None:
                 self.ndim = 0
+
+    def _check_name(self):
+        """Ensure column name follows FITS conventions."""
+        # allow anything?
+        pass
+
 
     def __get__(self, instance, owner=None):
         """Get data."""
@@ -129,15 +136,6 @@ class Column(metaclass=ABCMeta):
         """Clear data of this column."""
         if self.name in instance.__data__:
             del instance.__data__[self.name]
-
-    def __repr__(self):
-        """Representation of the class."""
-        unit = f"'{self.unit.to_string('fits')}'" if self.unit is not None else None
-        return (
-            f"{self.__class__.__name__}("
-            f"name={self.name!r}, required={self.required}, unit={unit}"
-            ")"
-        )
 
     @property
     @abstractmethod
@@ -178,7 +176,7 @@ class Column(metaclass=ABCMeta):
                 onerror=onerror,
             )
 
-        # a table as one dimension more than it's rows,
+        # a table has one dimension more than it's rows,
         # we also allow a single scalar value for scalar rows
         if data.ndim != self.ndim + 1 and not (data.ndim == 0 and self.ndim == 0):
             log_or_raise(
@@ -303,79 +301,80 @@ class BinaryTable(metaclass=BinaryTableMeta):
             if k in table.columns:
                 col.validate_data(table[k], onerror=onerror)
 
-
+@dataclass
 class Bool(Column):
     """A Boolean binary table column."""
 
     tform_code = "L"
-    dtype = bool
+    dtype : Type = bool
 
-
+@dataclass
 class BitField(Column):
     """Bitfield binary table column."""
 
     tform_code = "X"
-    dtype = bool
+    dtype : Type = bool
 
 
+@dataclass
 class Byte(Column):
     """Byte binary table column."""
 
-    tform_code = "B"
-    dtype = np.uint8
+    tform_code : str = "B"
+    dtype : Type = np.uint8
 
-
+@dataclass
 class Int16(Column):
     """16 Bit signed integer binary table column."""
 
-    tform_code = "I"
-    dtype = np.int16
+    tform_code : str = "I"
+    dtype : Type = np.int16
 
-
+@dataclass
 class Int32(Column):
     """32 Bit signed integer binary table column."""
 
-    tform_code = "J"
-    dtype = np.int32
+    tform_code : str = "J"
+    dtype : Type = np.int32
 
-
+@dataclass
 class Int64(Column):
     """64 Bit signed integer binary table column."""
 
-    tform_code = "K"
-    dtype = np.int64
+    tform_code : str = "K"
+    dtype : Type = np.int64
 
-
+@dataclass
 class Char(Column):
     """Single byte character binary table column."""
 
-    tform_code = "A"
-    dtype = np.dtype("S1")
+    tform_code : str = "A"
+    dtype : Type = np.dtype("S1")
 
-
+@dataclass
 class Float(Column):
     """Single precision floating point binary table column."""
 
-    tform_code = "E"
-    dtype = np.float32
+    tform_code : str = "E"
+    dtype : Type = np.float32
 
-
+@dataclass
 class Double(Column):
     """Single precision floating point binary table column."""
 
-    tform_code = "D"
-    dtype = np.float64
+    tform_code : str = "D"
+    dtype : Type = np.float64
 
-
+@dataclass
 class ComplexFloat(Column):
     """Single precision complex binary table column."""
 
-    tform_code = "C"
-    dtype = np.csingle
+    tform_code : str = "C"
+    dtype : Type = np.csingle
 
-
+@dataclass
 class ComplexDouble(Column):
     """Single precision complex binary table column."""
 
-    tform_code = "M"
-    dtype = np.cdouble
+    tform_code : str = "M"
+    dtype : Type = np.cdouble

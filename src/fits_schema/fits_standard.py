@@ -29,15 +29,15 @@ class FITSStandardHeaders(HeaderSchema):
 
     # see table 22 of https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
     DATE = HeaderCard(type_=str, required=False)
-    DATE_OBS = HeaderCard(keyword="DATE-OBS", type_=str, required=False)
-    DATE_BEG = HeaderCard(keyword="DATE-BEG", type_=str, required=False)
-    DATE_AVG = HeaderCard(keyword="DATE-AVG", type_=str, required=False)
-    DATE_END = HeaderCard(keyword="DATE-END", type_=str, required=False)
+    DATE_OBS = HeaderCard(name="DATE-OBS", type_=str, required=False)
+    DATE_BEG = HeaderCard(name="DATE-BEG", type_=str, required=False)
+    DATE_AVG = HeaderCard(name="DATE-AVG", type_=str, required=False)
+    DATE_END = HeaderCard(name="DATE-END", type_=str, required=False)
 
-    MJD_OBS = HeaderCard(keyword="MJD-OBS", type_=float, required=False)
-    MJD_BEG = HeaderCard(keyword="MJD-BEG", type_=float, required=False)
-    MJD_AVG = HeaderCard(keyword="MJD-AVG", type_=float, required=False)
-    MJD_END = HeaderCard(keyword="MJD-END", type_=float, required=False)
+    MJD_OBS = HeaderCard(name="MJD-OBS", type_=float, required=False)
+    MJD_BEG = HeaderCard(name="MJD-BEG", type_=float, required=False)
+    MJD_AVG = HeaderCard(name="MJD-AVG", type_=float, required=False)
+    MJD_END = HeaderCard(name="MJD-END", type_=float, required=False)
 
     # time definition
     MJDREF = HeaderCard(type_=float, required=False)

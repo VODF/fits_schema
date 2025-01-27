@@ -58,13 +58,13 @@ def test_repr():
     class TestTable(BinaryTable):
         test = Double()
 
-    assert repr(TestTable.test) == "Double(name='test', required=True, unit=None)"
+    assert repr(TestTable.test) == "Double(name='test', description='', required=True, unit=None, examples=[], reference=None, ucd=None, strict_unit=False, ndim=0, shape=None, dtype=<class 'numpy.float64'>, tform_code='D')"
 
     TestTable.test.unit = u.m
-    assert repr(TestTable.test) == "Double(name='test', required=True, unit='m')"
+    assert repr(TestTable.test) == 'Double(name=\'test\', description=\'\', required=True, unit=Unit("m"), examples=[], reference=None, ucd=None, strict_unit=False, ndim=0, shape=None, dtype=<class \'numpy.float64\'>, tform_code=\'D\')'
 
     TestTable.test.unit = u.m**-2
-    assert repr(TestTable.test) == "Double(name='test', required=True, unit='m-2')"
+    assert repr(TestTable.test) == 'Double(name=\'test\', description=\'\', required=True, unit=Unit("1 / m2"), examples=[], reference=None, ucd=None, strict_unit=False, ndim=0, shape=None, dtype=<class \'numpy.float64\'>, tform_code=\'D\')'
 
 
 def test_access():

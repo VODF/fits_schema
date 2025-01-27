@@ -14,4 +14,4 @@ class PrimaryHeader(HeaderSchema):
     INSTRUME = HeaderCard(type_=str, required=False)
     OBSERVER = HeaderCard(type_=str, required=False)
     OBJECT = HeaderCard(type_=str, required=False)
-    DATE_OBS = HeaderCard(keyword="DATE-OBS", type_=str, required=False)
+    DATE_OBS = HeaderCard(name="DATE-OBS", type_=str, required=False)

@@ -5,12 +5,15 @@ See section 4 of the FITS Standard:
 https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
 """
 
+from dataclasses import dataclass
 import logging
 import re
 from collections.abc import Iterable
 from datetime import date, datetime
-from typing import Self
+from typing import Self, Iterable, Tuple, Type
 
+
+from astropy import units as u
 from astropy.io import fits
 
 from .exceptions import (
@@ -22,6 +25,8 @@ from .exceptions import (
 )
 from .utils import log_or_raise
 
+from .schema_element import SchemaElement
+
 __all__ = ["HeaderSchema", "HeaderCard"]
 
 log = logging.getLogger(__name__)
@@ -31,54 +36,50 @@ HEADER_ALLOWED_TYPES = (str, bool, int, float, complex, date, datetime)
 TABLE_KEYWORDS = {"TTYPE", "TUNIT", "TFORM", "TSCAL", "TZERO", "TDISP", "TDIM"}
 IGNORE = TABLE_KEYWORDS
 
-
-class HeaderCard:
+@dataclass
+class HeaderCard(SchemaElement):
     """
     Schema for the entry of a FITS header.
 
     Attributes
     ----------
-    keyword: str
+    name: str
         override the keyword given as the class member name,
         useful to define keywords containing hyphens or starting with numbers
+    description: str
+        Description of this header.
     required: bool
         If this card is required
     allowed_values: instance of any in ``HEADER_ALLOWED_TYPES`` or iterable of that
-        If specified, card must have on of these values
+        If specified, card must have one of these values
     position: int or None
         if not None, the card must be at this position in the header,
         starting with the first card at 0
-    type: one or a tuple of the types in ``HEADER_ALLOWED_TYPES``
+    type_: one or a tuple of the types in ``HEADER_ALLOWED_TYPES``
     empty: True, False or None
         If True, value must be empty, if False must not be empty,
         if None, no check if a value is present is performed
     case_insensitive: True
         match str values case insensitively
+    reference: str | None
+        Citation for the origin of this keyword
+    examples: list[str] | None
+        List of example values, to use in documentation
+    ivoa_key: str
+        Relevant keyword in the IVOA standards, including the standard, e.g. ObsCore.institute
     """
 
-    def __init__(
-        self,
-        keyword=None,
-        *,
-        description: str = "",
-        required=True,
-        allowed_values=None,
-        position=None,
-        type_=None,
-        empty=None,
-        case_insensitive=True,
-    ):
-        self.keyword = None
-        if keyword is not None:
-            self.__set_name__(None, keyword)
+    allowed_values: Iterable | None = None
+    position: int | None = None
+    type_: Type | Tuple[Type] | None = None
+    empty: bool | None = None
+    case_insensitive: bool = True
 
-        self.required = required
-        self.position = position
-        self.empty = empty
-        self.case_insensitive = case_insensitive
-        self.description = description
 
-        vals = allowed_values
+    def __post_init__(self):
+        #super().__post_init__()
+
+        vals = self.allowed_values
         if vals is not None:
             if not isinstance(vals, Iterable) or isinstance(vals, str):
                 vals = {vals}
@@ -91,52 +92,52 @@ class HeaderCard:
             if not all(isinstance(v, HEADER_ALLOWED_TYPES) for v in vals):
                 raise ValueError(f"Values must be instances of {HEADER_ALLOWED_TYPES}")
 
-        self.type = type_
-        if type_ is not None:
-            if isinstance(type_, Iterable):
-                self.type = tuple(set(type_))
+        if self.type_ is not None:
+            if isinstance(self.type_, Iterable):
+                self.type_ = tuple(set(self.type_))
 
             # check that value and type match if both supplied
             if vals is not None:
-                if any(not isinstance(v, type_) for v in vals):
+                if any(not isinstance(v, self.type_) for v in vals):
                     raise TypeError(
-                        f"`values` must be of type `type_`({type_}) or None"
+                        f"`values` must be of type `type_`({self.type_}) or None"
                     )
         else:
             # if only value is supplied, deduce type from value
             if vals is not None:
-                self.type = tuple(set(type(v) for v in vals))
+                self.type_ = tuple(set(type(v) for v in vals))
 
         self.allowed_values = vals
 
-    def __set_name__(self, owner, name):
-        """Rename to keyword if existing and check name style."""
-        if self.keyword is None:
-            if len(name) > 8:
+
+    def _check_name(self):
+        """Ensure card name follows FITS conventions."""
+        if self.name is not None:
+            if len(self.name) > 8:
                 raise ValueError("FITS header keywords must be 8 characters or shorter")
 
-            if not re.match(r"^[A-Z0-9\-_]{1,8}$", name):
+            if not re.match(r"^[A-Z0-9\-_]{1,8}$", self.name):
                 raise ValueError(
                     "FITS header keywords must only contain"
                     " ascii uppercase, digit, _ or -"
                 )
-            self.keyword = name
+
 
     def validate(self, card, pos, onerror="raise"):
         """Validate an astropy.io.fits.card.Card."""
         valid = True
-        k = self.keyword
+        k = self.name
 
         if self.position is not None and self.position != pos:
             valid = False
             msg = f"Expected card {k} at position {self.position} but found at {pos}"
             log_or_raise(msg, WrongPosition, log, onerror=onerror)
 
-        if self.type is not None and not isinstance(card.value, self.type):
+        if self.type_ is not None and not isinstance(card.value, self.type_):
             valid = False
             msg = (
                 f"Header keyword {k} has wrong type {type(card.value)}"
-                f", expected one of {self.type}"
+                f", expected one of {self.type_}"
             )
             log_or_raise(msg, WrongType, log, onerror=onerror)
 
@@ -183,7 +184,7 @@ class HeaderSchemaMeta(type):
 
         for k, v in dct.items():
             if isinstance(v, HeaderCard):
-                k = v.keyword or k  # use user override for keyword if there
+                k = v.name or k  # use user override for keyword if there
                 dct["__cards__"][k] = v
 
         new_cls = super().__new__(cls, name, bases, dct)
