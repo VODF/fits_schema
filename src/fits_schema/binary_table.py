@@ -106,7 +106,8 @@ class Column(SchemaElement, metaclass=ABCMeta):
             if not re.fullmatch("[a-zA-Z0-9_]+", self.name):
                 warn(
                     f"The column named '{self.name}' is recommended to contain only letters, "
-                    "numbers, and underscores."
+                    "numbers, and underscores.",
+                    UserWarning,
                 )
 
     def __get__(self, instance, owner=None):
