@@ -6,7 +6,8 @@ https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
 """
 
 import logging
-from abc import ABCMeta, abstractmethod
+import re
+from abc import ABCMeta
 from dataclasses import dataclass
 
 import astropy.units as u
@@ -91,11 +92,21 @@ class Column(SchemaElement, metaclass=ABCMeta):
             # simple column by default
             if self.ndim is None:
                 self.ndim = 0
+        if self.name:
+            self._check_name()
 
     def _check_name(self):
-        """Ensure column name follows FITS conventions."""
-        # allow anything?
-        pass
+        """Ensure column name follows FITS conventions.
+
+        The FITS standard recommends only upper and lower-case letters and
+        spaces, digits, and underscores
+        """
+        if self.name is not None:
+            if not re.fullmatch("[a-zA-Z0-9_]+", self.name):
+                raise ValueError(
+                    f"The column named '{self.name}' should contain only letters, "
+                    "numbers, and underscores."
+                )
 
     def __get__(self, instance, owner=None):
         """Get data."""

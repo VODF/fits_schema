@@ -304,3 +304,18 @@ def test_header():
     t.meta["TEST"] = "hello"
     hdu = fits.BinTableHDU(t)
     TestTable.validate_hdu(hdu)
+
+
+def test_column_name():
+    from fits_schema import Int32, BinaryTable
+
+    # ensure that upper, lower, underscore, and numbers match
+    col = Int32(name="UPPERLower_Thing0123456")
+
+    # check that adding other characters fails:
+
+    with pytest.raises(ValueError):
+        col = Int32(name="this-should-fail")
+
+    with pytest.raises(ValueError):
+        col = Int32(name="Has Spaces")
