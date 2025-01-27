@@ -120,12 +120,6 @@ class Column(SchemaElement, metaclass=ABCMeta):
         """Set data."""
         instance.__data__[self.name] = value
 
-    def __set_name__(self, owner, name):
-        """Rename variable (protocol)."""
-        # respect user override for names that are not valid identifiers
-        if self.name is None:
-            self.name = name
-
     def __delete__(self, instance):
         """Clear data of this column."""
         if self.name in instance.__data__:
