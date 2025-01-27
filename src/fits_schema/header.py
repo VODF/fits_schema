@@ -78,6 +78,9 @@ class HeaderCard(SchemaElement):
 
         self.allowed_values = vals
 
+        if self.name:
+            self._check_name()
+
     def _check_name(self):
         """Ensure card name follows FITS conventions."""
         if self.name is not None:
