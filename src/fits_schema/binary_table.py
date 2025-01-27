@@ -61,24 +61,7 @@ class BinaryTableHeader(HeaderSchema):
 
 @dataclass
 class Column(SchemaElement, metaclass=ABCMeta):
-    """A binary table column descriptor.
-
-    Attributes
-    ----------
-    unit: astropy.units.Unit
-        unit of the column
-    strict_unit: bool
-        If True, the unit must match exactly, not only be convertible.
-    required: bool
-        If this column is required (True) or optional (False)
-    name: str
-        Use to specify a different column name than the class attribute name.
-    ndim: int
-        Dimensionality of a single row, numbers have ndim=0.
-        The resulting data column has ``ndim_col = ndim + 1``
-    shape: Tuple[int]
-        Shape of a single row.
-    """
+    """A binary table column descriptor."""
 
     #: allow compatible units if False
     strict_unit: bool = False

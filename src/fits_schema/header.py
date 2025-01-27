@@ -38,36 +38,7 @@ IGNORE = TABLE_KEYWORDS
 
 @dataclass
 class HeaderCard(SchemaElement):
-    """
-    Schema for the entry of a FITS header.
-
-    Attributes
-    ----------
-    name: str
-        override the keyword given as the class member name,
-        useful to define keywords containing hyphens or starting with numbers
-    description: str
-        Description of this header.
-    required: bool
-        If this card is required
-    allowed_values: instance of any in ``HEADER_ALLOWED_TYPES`` or iterable of that
-        If specified, card must have one of these values
-    position: int or None
-        if not None, the card must be at this position in the header,
-        starting with the first card at 0
-    type_: one or a tuple of the types in ``HEADER_ALLOWED_TYPES``
-    empty: True, False or None
-        If True, value must be empty, if False must not be empty,
-        if None, no check if a value is present is performed
-    case_insensitive: True
-        match str values case insensitively
-    reference: str | None
-        Citation for the origin of this keyword
-    examples: list[str] | None
-        List of example values, to use in documentation
-    ivoa_key: str
-        Relevant keyword in the IVOA standards, including the standard, e.g. ObsCore.institute
-    """
+    """Schema for the entry of a FITS header."""
 
     allowed_values: Iterable | None = None
     position: int | None = None
