@@ -1,4 +1,8 @@
-# fits_schema [![Build Status](https://travis-ci.com/open-gamma-ray-astro/fits_schema.svg?branch=master)](https://travis-ci.com/open-gamma-ray-astro/fits_schema) [![codecov](https://codecov.io/gh/open-gamma-ray-astro/fits_schema/branch/master/graph/badge.svg)](https://codecov.io/gh/open-gamma-ray-astro/fits_schema) [![PyPI version](https://badge.fury.io/py/fits-schema.svg)](https://badge.fury.io/py/fits-schema)
+# fits-schema
+[![CI](https://github.com/VODF/fits_schema/actions/workflows/ci.yml/badge.svg)](https://github.com/VODF/fits_schema/actions/workflows/ci.yml)
+[![Quality Gate Status](https://sonar-cta-dpps.zeuthen.desy.de/api/project_badges/measure?project=VODF_fits_schema_AZSNmvSdAfB1AuE28SGr&metric=alert_status&token=sqb_fa08e2cf40384be0a05c433de526b8d744e2ae30)](https://sonar-cta-dpps.zeuthen.desy.de/dashboard?id=VODF_fits_schema_AZSNmvSdAfB1AuE28SGr)
+[![Coverage](https://sonar-cta-dpps.zeuthen.desy.de/api/project_badges/measure?project=VODF_fits_schema_AZSNmvSdAfB1AuE28SGr&metric=coverage&token=sqb_fa08e2cf40384be0a05c433de526b8d744e2ae30)](https://sonar-cta-dpps.zeuthen.desy.de/dashboard?id=VODF_fits_schema_AZSNmvSdAfB1AuE28SGr)
+[![PyPI version](https://badge.fury.io/py/fits-schema.svg)](https://badge.fury.io/py/fits-schema)
 
 
 
