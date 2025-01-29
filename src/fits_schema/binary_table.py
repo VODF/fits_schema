@@ -96,6 +96,10 @@ class Column(SchemaElement, metaclass=ABCMeta):
             # simple column by default
             if self.ndim is None:
                 self.ndim = 0
+
+        if (self.dtype == str) and self.unit:
+            raise SchemaError("Units are not compatible with string columns.")
+
         if self.name:
             self._check_name()
 

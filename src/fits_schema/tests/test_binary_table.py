@@ -6,6 +6,7 @@ from astropy.table import Table
 
 from fits_schema.exceptions import (
     RequiredMissing,
+    SchemaError,
     WrongDims,
     WrongShape,
     WrongType,
@@ -334,3 +335,7 @@ def test_string_columns():
     test_table = Table(dict(value=[1, 2, 3, 4], name=["this", "is", "a", "test"]))
     test_hdu = fits.BinTableHDU(data=test_table)
     ExampleTable.validate_hdu(test_hdu)
+
+    # ensure that a string with units is rejected as a schema error.
+    with pytest.raises(SchemaError):
+        Column(dtype=str, unit="TeV")
