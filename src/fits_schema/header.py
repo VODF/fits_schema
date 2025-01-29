@@ -17,6 +17,7 @@ from astropy.units import Unit
 from .exceptions import (
     AdditionalHeaderCard,
     RequiredMissing,
+    SchemaError,
     WrongPosition,
     WrongType,
     WrongValue,
@@ -89,6 +90,7 @@ class HeaderCard(SchemaElement):
         if keyword is not None:
             self.__set_name__(None, keyword)
 
+        self.allowed_values = allowed_values
         self.position = position
         self.empty = empty
         self.case_insensitive = case_insensitive
@@ -104,7 +106,7 @@ class HeaderCard(SchemaElement):
                 vals = set(v.upper() if isinstance(v, str) else v for v in vals)
 
             if not all(isinstance(v, HEADER_ALLOWED_TYPES) for v in vals):
-                raise ValueError(f"Values must be instances of {HEADER_ALLOWED_TYPES}")
+                raise SchemaError(f"Values must be instances of {HEADER_ALLOWED_TYPES}")
 
         self.type = type_
         if type_ is not None:
@@ -114,8 +116,9 @@ class HeaderCard(SchemaElement):
             # check that value and type match if both supplied
             if vals is not None:
                 if any(not isinstance(v, type_) for v in vals):
-                    raise TypeError(
-                        f"`values` must be of type `type_`({type_}) or None"
+                    raise SchemaError(
+                        f"The type of `allowed_values` ({self.allowed_values}) "
+                        f"and `type` ({self.type}) do not agree."
                     )
         else:
             # if only value is supplied, deduce type from value
@@ -128,10 +131,12 @@ class HeaderCard(SchemaElement):
         """Rename to keyword if existing and check name style."""
         if self.keyword is None:
             if len(name) > 8:
-                raise ValueError("FITS header keywords must be 8 characters or shorter")
+                raise SchemaError(
+                    "FITS header keywords must be 8 characters or shorter"
+                )
 
             if not re.match(r"^[A-Z0-9\-_]{1,8}$", name):
-                raise ValueError(
+                raise SchemaError(
                     "FITS header keywords must only contain"
                     " ascii uppercase, digit, _ or -"
                 )
