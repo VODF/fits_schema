@@ -20,7 +20,7 @@ from .exceptions import (
     WrongType,
     WrongUnit,
 )
-from .header import HeaderCard, HeaderSchema
+from .header import Header, HeaderCard
 from .utils import log_or_raise
 
 __all__ = [
@@ -42,7 +42,7 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-class BinaryTableHeader(HeaderSchema):
+class BinaryTableHeader(Header):
     """Default binary table header schema."""
 
     XTENSION = HeaderCard(allowed_values="BINTABLE", position=0)
@@ -113,7 +113,12 @@ class Column(metaclass=ABCMeta):
         if instance is None:
             return self
 
-        return instance.__data__.get(self.name)
+        try:
+            return instance.__data__[self.name]
+        except KeyError:
+            if self.required is False:
+                return None
+            raise
 
     def __set__(self, instance, value):
         """Set data."""
@@ -127,8 +132,7 @@ class Column(metaclass=ABCMeta):
 
     def __delete__(self, instance):
         """Clear data of this column."""
-        if self.name in instance.__data__:
-            del instance.__data__[self.name]
+        del instance.__data__[self.name]
 
     def __repr__(self):
         """Representation of the class."""
@@ -226,7 +230,7 @@ class BinaryTableMeta(type):
 
         # ensure we have a __header__ if not specified
         if not header_schema:
-            dct["__header__"] = BinaryTableHeader()
+            dct["__header__"] = BinaryTableHeader
 
         # inherit header schema and  from bases
         for base in reversed(bases):
@@ -267,17 +271,29 @@ class BinaryTable(metaclass=BinaryTableMeta):
     ...        HDUCLASS = HeaderCard(required=True, allowed_values="Events")
     """
 
-    def __init__(self, **column_data):
-        self.__data__ = {}
-        self.header = fits.Header()
+    def __init__(self, hdu):
+        if isinstance(hdu, fits.BinTableHDU):
+            self.validate_hdu(hdu)
+            self.__data__ = Table.read(hdu)
+        elif isinstance(hdu, Table):
+            # make sure we have a table and not a subclass
+            # FIXME: there might be a better way than creating a hdu from the table
+            # i.e. implement validate_table
+            table = hdu
+            hdu = fits.BinTableHDU(hdu)
+            self.validate_hdu(hdu)
+            self.__data__ = Table(table, copy=False)
+        else:
+            raise TypeError(
+                f"hdu must be a BinTableHDU or Table, got {hdu.__class__!r}"
+            )
 
-        for k, v in column_data.items():
-            setattr(self, k, v)
+        self.header = self.__header__(hdu.header)
 
     def validate_data(self):
         """Check that data matches schema."""
         for k, col in self.__columns__.items():
-            validated = col.validate_data(self.__data__.get(k))
+            validated = col.validate_data(getattr(self, k))
             if validated is not None:
                 setattr(self, k, validated)
 

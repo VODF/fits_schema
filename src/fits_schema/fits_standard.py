@@ -2,12 +2,12 @@
 
 """Definitions from the FITS standard, for schema validation."""
 
-from .header import HeaderCard, HeaderSchema
+from .header import Header, HeaderCard
 
 __all__ = ["FITSStandardHeaders"]
 
 
-class FITSStandardHeaders(HeaderSchema):
+class FITSStandardHeaders(Header):
     """FITS standard headers.
 
     Optional Headers defined by the `FITS Standard v4.0

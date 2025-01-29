@@ -11,7 +11,7 @@ A python package to define and validate schemata for FITS files.
 
 ```python
 from fits_schema.binary_table import BinaryTable, Double
-from fits_schema.header import HeaderSchema, HeaderCard
+from fits_schema.header import Header, HeaderCard
 import astropy.units as u
 from astropy.io import fits
 
@@ -22,7 +22,7 @@ class Events(BinaryTable):
     ra     = Double(unit=u.deg)
     dec    = Double(unit=u.deg)
 
-    class __header__(HeaderSchema):
+    class __header__(Header):
         EXTNAME = HeaderCard(allowed_values='events')
 
 

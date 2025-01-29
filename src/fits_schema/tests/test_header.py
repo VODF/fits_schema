@@ -10,19 +10,19 @@ from fits_schema.exceptions import (
 
 
 def test_length():
-    from fits_schema.header import HeaderCard, HeaderSchema
+    from fits_schema.header import Header, HeaderCard
 
     with pytest.raises((ValueError, RuntimeError)):
 
-        class LengthHeader(HeaderSchema):
+        class LengthHeader(Header):
             MORE_THAN_8 = HeaderCard()
 
     with pytest.raises((ValueError, RuntimeError)):
 
-        class LowerHeader(HeaderSchema):
+        class LowerHeader(Header):
             lowercas = HeaderCard()
 
-    class DateHeader(HeaderSchema):
+    class DateHeader(Header):
         DATE_OBS = HeaderCard(keyword="DATE-OBS")
 
     assert "DATE-OBS" in DateHeader.__cards__
@@ -73,11 +73,11 @@ def test_wrong_value():
 
 
 def test_type():
-    from fits_schema.header import HeaderCard, HeaderSchema
+    from fits_schema.header import Header, HeaderCard
 
     h = fits.Header()
 
-    class Header(HeaderSchema):
+    class Header(Header):
         TEST = HeaderCard(type_=str)
 
     h["TEST"] = 5
@@ -87,7 +87,7 @@ def test_type():
     h["TEST"] = "hello"
     Header.validate_header(h)
 
-    class Header(HeaderSchema):
+    class Header(Header):
         TEST = HeaderCard(type_=[str, int])
 
     h["TEST"] = "hello"
@@ -101,11 +101,11 @@ def test_type():
 
 
 def test_empty():
-    from fits_schema.header import HeaderCard, HeaderSchema
+    from fits_schema.header import Header, HeaderCard
 
     h = fits.Header()
 
-    class Header(HeaderSchema):
+    class Header(Header):
         TEST = HeaderCard(empty=True)
 
     h["TEST"] = None
@@ -118,7 +118,7 @@ def test_empty():
     with pytest.raises(WrongValue):
         Header.validate_header(h)
 
-    class Header(HeaderSchema):
+    class Header(Header):
         TEST = HeaderCard(empty=False)
 
     h["TEST"] = None
@@ -130,9 +130,9 @@ def test_empty():
 
 
 def test_inheritance():
-    from fits_schema.header import HeaderCard, HeaderSchema
+    from fits_schema.header import Header, HeaderCard
 
-    class BaseHeader(HeaderSchema):
+    class BaseHeader(Header):
         FOO = HeaderCard()
         BAR = HeaderCard(type_=str)
 
@@ -157,9 +157,9 @@ def test_invalid_arguments():
 
 def test_additional():
     from fits_schema.exceptions import AdditionalHeaderCard
-    from fits_schema.header import HeaderCard, HeaderSchema
+    from fits_schema.header import Header, HeaderCard
 
-    class Header(HeaderSchema):
+    class Header(Header):
         TEST = HeaderCard()
 
     h = fits.Header()
@@ -171,9 +171,9 @@ def test_additional():
 
 
 def test_case():
-    from fits_schema.header import HeaderCard, HeaderSchema
+    from fits_schema.header import Header, HeaderCard
 
-    class Header(HeaderSchema):
+    class Header(Header):
         TEST = HeaderCard(allowed_values={"foo"})
 
     h = fits.Header()
@@ -186,7 +186,7 @@ def test_case():
     h["TEST"] = "FOO"
     Header.validate_header(h)
 
-    class Header(HeaderSchema):
+    class Header(Header):
         TEST = HeaderCard(allowed_values={"foo"}, case_insensitive=False)
 
     h["TEST"] = "Foo"

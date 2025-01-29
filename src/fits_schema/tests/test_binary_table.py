@@ -2,7 +2,7 @@ import astropy.units as u
 import numpy as np
 import pytest
 from astropy.io import fits
-from astropy.table import Table
+from astropy.table import Column, Table
 
 from fits_schema.exceptions import (
     RequiredMissing,
@@ -20,36 +20,33 @@ def test_unit():
         test = Double(unit=u.m)
 
     # allow no units
-    table = TestTable(test=[1, 2, 3])
+    table = TestTable(Table({"test": [1, 2, 3]}))
     table.validate_data()
     assert (table.test == u.Quantity([1, 2, 3], u.m)).all()
 
     # convertible unit
-    table = TestTable(test=[1, 2, 3] * u.cm)
+    table = TestTable(Table(dict(test=[1, 2, 3] * u.cm)))
     table.validate_data()
 
-    table = TestTable(test=5 * u.deg)
     with pytest.raises(WrongUnit):
-        table.validate_data()
+        table = TestTable(Table(dict(test=[5] * u.deg)))
 
     # validate no unit is enforced:
     class TestTable(BinaryTable):
         test = Double(unit=u.dimensionless_unscaled)
 
-    table = TestTable(test=[1, 2, 3])
+    table = TestTable(Table(dict(test=[1, 2, 3])))
     table.validate_data()
 
-    table = TestTable(test=[1, 2, 3] * u.deg)
     with pytest.raises(WrongUnit):
-        table.validate_data()
+        table = TestTable(Table(dict(test=[1, 2, 3] * u.deg)))
 
     # test strict_unit
     class TestTable(BinaryTable):
         test = Double(unit=u.m, strict_unit=True)
 
-    table = TestTable(test=[1, 2, 3] * u.cm)
     with pytest.raises(WrongUnit):
-        table.validate_data()
+        table = TestTable(Table(dict(test=[1, 2, 3] * u.cm)))
 
 
 def test_repr():
@@ -73,7 +70,7 @@ def test_access():
     class TestTable(BinaryTable):
         test = Double(required=False)
 
-    t = TestTable()
+    t = TestTable(Table({}))
     assert t.test is None
     t.test = [5.0]
     assert t.test[0] == 5.0
@@ -96,19 +93,16 @@ def test_shape():
         test = Double(shape=(10,))
 
     # single number, wrong number of dimensions
-    table = TestTable(test=3.14)
     with pytest.raises(WrongDims):
-        table.validate_data()
+        TestTable(Table({"test": [3.14]}))
 
     # three numbers per row, should be ten
-    table = TestTable(test=[[1, 2, 3]])
     with pytest.raises(WrongShape):
-        table.validate_data()
+        TestTable(Table({"test": [[1, 2, 3]]}))
 
     # this should work
     rng = np.random.default_rng(1337)
-    table = TestTable(test=[np.arange(10), rng.normal(size=10)])
-    table.validate_data()
+    TestTable(Table({"test": [np.arange(10), rng.normal(size=10)]}))
 
 
 def test_ndim():
@@ -118,40 +112,43 @@ def test_ndim():
         test = Double(ndim=2)
 
     # single numbers
-    table = TestTable(test=[1, 2, 3])
     with pytest.raises(WrongDims):
-        table.validate_data()
+        TestTable(Table({"test": [1, 2, 3]}))
 
     # 1d
-    table = TestTable(
-        test=[
-            [1, 2, 3],
-            [4, 5, 6],
-        ]
-    )
     with pytest.raises(WrongDims):
-        table.validate_data()
+        TestTable(
+            Table(
+                dict(
+                    test=[
+                        [1, 2, 3],
+                        [4, 5, 6],
+                    ]
+                )
+            )
+        )
 
     # each row is 2d, fits
-    table = TestTable(
-        test=[
-            np.random.default_rng().normal(size=(5, 3)),
-            np.random.default_rng().normal(size=(5, 3)),
-        ]
+    TestTable(
+        Table(
+            dict(
+                test=[
+                    np.random.default_rng().normal(size=(5, 3)),
+                    np.random.default_rng().normal(size=(5, 3)),
+                ]
+            )
+        )
     )
-    table.validate_data()
 
     # 3d not
-    table = TestTable(test=[np.zeros((2, 2, 2)), np.ones((2, 2, 2))])
     with pytest.raises(WrongDims):
-        table.validate_data()
+        TestTable(Table(dict(test=[np.zeros((2, 2, 2)), np.ones((2, 2, 2))])))
 
     class TestTable(BinaryTable):
         test = Double()
 
     # check a single number is allowed for normal columns
-    table = TestTable(test=5)
-    table.validate_data()
+    TestTable(Table(dict(test=[5])))
 
 
 def test_required():
@@ -160,13 +157,10 @@ def test_required():
     class TestTable(BinaryTable):
         test = Bool(required=True)
 
-    table = TestTable()
-
     with pytest.raises(RequiredMissing):
-        table.validate_data()
+        TestTable(Table({}))
 
-    table.test = [True, False]
-    table.validate_data()
+    TestTable(Table(dict(test=[True, False])))
 
 
 def test_data_types():
@@ -175,7 +169,7 @@ def test_data_types():
     class TestTable(BinaryTable):
         test = Int16(required=False)
 
-    table = TestTable()
+    table = TestTable(Table({}))
 
     # check no data is ok, as column is optional
     assert table.validate_data() is None
@@ -262,12 +256,20 @@ def test_optional_columns():
 
 def test_header_not_schema():
     from fits_schema.binary_table import BinaryTable
+    from fits_schema.header import Header
 
     with pytest.raises(TypeError):
 
         class Table(BinaryTable):
-            # should inherit from HeaderSchema
+            # must inherit from BinaryTableHeader
             class __header__:
+                pass
+
+    with pytest.raises(TypeError):
+
+        class Table(BinaryTable):
+            # must inherit from BinaryTableHeader
+            class __header__(Header):
                 pass
 
 
@@ -295,3 +297,38 @@ def test_header():
     t.meta["TEST"] = "hello"
     hdu = fits.BinTableHDU(t)
     TestTable.validate_hdu(hdu)
+
+
+@pytest.fixture
+def events_file(tmp_path):
+    energy = [0.1, 0.2, 0.3] * u.TeV
+    event_id = np.arange(len(energy))
+    table = Table({"event_id": event_id, "energy": energy})
+
+    hdu = fits.BinTableHDU(table, name="EVENTS")
+    hdu.header["OBS_ID"] = 1
+
+    hdul = fits.HDUList([fits.PrimaryHDU(), hdu])
+    path = tmp_path / "events.fits.gz"
+    hdul.writeto(path)
+    return path
+
+
+def test_data(events_file):
+    from fits_schema.binary_table import BinaryTable, BinaryTableHeader, Double, Int64
+    from fits_schema.header import HeaderCard
+
+    class EventsTable(BinaryTable):
+        event_id = Int64()
+        energy = Double(unit=u.TeV)
+
+        class __header__(BinaryTableHeader):
+            OBS_ID = HeaderCard(type_=int)
+
+    with fits.open(events_file) as hdul:
+        events = EventsTable(hdul["EVENTS"])
+
+    assert isinstance(events.event_id, Column)
+    assert isinstance(events.energy, Column)
+    assert len(events.event_id) == 3
+    assert events.energy.unit == u.TeV
