@@ -41,5 +41,5 @@ class AdditionalHeaderCard(UserWarning):
     """Issued when a header has a card not mentioned in the schema."""
 
 
-class SchemaError(UserWarning):
+class SchemaError(ValueError):
     """Errors in Schema Definition, not data validation."""
