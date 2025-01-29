@@ -183,10 +183,10 @@ class HeaderCard:
 
 
 class HeaderMeta(type):
-    """Metaclass for HeaderSchema."""
+    """Metaclass for Header."""
 
     def __new__(cls, name, bases, dct):
-        """Instantiate and check a HeaderSchema."""
+        """Instantiate and check a Header."""
         dct["__cards__"] = {}
         dct["__slots__"] = ("_header",)
 
@@ -207,16 +207,16 @@ class Header(metaclass=HeaderMeta):
     """
     Schema definition for the header of a FITS HDU.
 
-    To be added as ``class __header__(HeaderSchema)`` to HDU schema classes.
+    To be added as ``class __header__(Header)`` to HDU schema classes.
 
     Add `HeaderCard` class members to define the schema.
 
 
     Examples
     --------
-    >>> from fits_schema.header import HeaderSchema, HeaderCard
+    >>> from fits_schema.header import Header, HeaderCard
     >>>
-    >>> class MyHeaderSchema(HeaderSchema):
+    >>> class MyHeader(Header):
     ...     FOO = HeaderCard(required=True, type_=int)
     ...     BAR = HeaderCard(required=True, type_=str)  # doctest: +SKIP
     """
@@ -238,7 +238,7 @@ class Header(metaclass=HeaderMeta):
 
     @classmethod
     def grouped_cards(cls) -> dict[Self, list[HeaderCard]]:
-        """Return a list of cards grouped by parent HeaderSchema class."""
+        """Return a list of cards grouped by parent Header class."""
         seen = set()
         group = {}
 

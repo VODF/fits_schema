@@ -256,12 +256,20 @@ def test_optional_columns():
 
 def test_header_not_schema():
     from fits_schema.binary_table import BinaryTable
+    from fits_schema.header import Header
 
     with pytest.raises(TypeError):
 
         class Table(BinaryTable):
-            # should inherit from HeaderSchema
+            # must inherit from BinaryTableHeader
             class __header__:
+                pass
+
+    with pytest.raises(TypeError):
+
+        class Table(BinaryTable):
+            # must inherit from BinaryTableHeader
+            class __header__(Header):
                 pass
 
 
