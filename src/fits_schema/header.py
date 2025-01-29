@@ -22,7 +22,7 @@ from .exceptions import (
 )
 from .utils import log_or_raise
 
-__all__ = ["HeaderSchema", "HeaderCard"]
+__all__ = ["Header", "HeaderCard"]
 
 log = logging.getLogger(__name__)
 
@@ -122,6 +122,19 @@ class HeaderCard:
                 )
             self.keyword = name
 
+    def __get__(self, instance: "None | Header", owner: "None | HeaderMeta" = None):
+        """Delegate to the actual fits header for getting value."""
+        # accessed as class attribute
+        if instance is None:
+            return self
+        return instance._header[self.keyword]
+
+    def __set__(self, instance: "Header", value):
+        """Delegate to the actual fits header for setting value."""
+        # TODO: need to validate here before setting
+        # but current validate only works after value has been set
+        instance._header[self.keyword] = value
+
     def validate(self, card, pos, onerror="raise"):
         """Validate an astropy.io.fits.card.Card."""
         valid = True
@@ -169,16 +182,16 @@ class HeaderCard:
         return valid
 
 
-class HeaderSchemaMeta(type):
+class HeaderMeta(type):
     """Metaclass for HeaderSchema."""
 
     def __new__(cls, name, bases, dct):
         """Instantiate and check a HeaderSchema."""
         dct["__cards__"] = {}
-        dct["__slots__"] = tuple()
+        dct["__slots__"] = ("_header",)
 
         for base in reversed(bases):
-            if issubclass(base, HeaderSchema):
+            if issubclass(base, Header):
                 dct["__cards__"].update(base.__cards__)
 
         for k, v in dct.items():
@@ -190,7 +203,7 @@ class HeaderSchemaMeta(type):
         return new_cls
 
 
-class HeaderSchema(metaclass=HeaderSchemaMeta):
+class Header(metaclass=HeaderMeta):
     """
     Schema definition for the header of a FITS HDU.
 
@@ -208,15 +221,18 @@ class HeaderSchema(metaclass=HeaderSchemaMeta):
     ...     BAR = HeaderCard(required=True, type_=str)  # doctest: +SKIP
     """
 
+    def __init__(self, header):
+        self._header = header
+
     @classmethod
     def _header_schemas(cls) -> list[Self]:
-        """Return a list of HeaderSchema parents."""
+        """Return a list of Header parents."""
         return list(
             reversed(
                 [
                     cls,
                 ]
-                + [base for base in cls.__bases__ if issubclass(base, HeaderSchema)]
+                + [base for base in cls.__bases__ if issubclass(base, Header)]
             )
         )
 

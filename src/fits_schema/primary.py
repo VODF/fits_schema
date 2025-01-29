@@ -1,9 +1,9 @@
 """Primary Header Schema."""
 
-from .header import HeaderCard, HeaderSchema
+from .header import Header, HeaderCard
 
 
-class PrimaryHeader(HeaderSchema):
+class PrimaryHeader(Header):
     """Primary Header Schema."""
 
     SIMPLE = HeaderCard(allowed_values=[True], position=0)

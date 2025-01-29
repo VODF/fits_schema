@@ -14,7 +14,7 @@ from .binary_table import (
     Int64,
     Table,
 )
-from .header import HeaderCard, HeaderSchema
+from .header import Header, HeaderCard
 from .version import __version__
 
 __all__ = [
@@ -23,7 +23,7 @@ __all__ = [
     "BinaryTable",
     "BinaryTableHeader",
     "HeaderCard",
-    "HeaderSchema",
+    "Header",
     "Int16",
     "Int32",
     "Int64",
