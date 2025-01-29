@@ -46,6 +46,8 @@ __all__ = [
 
 log = logging.getLogger(__name__)
 
+ALLOWED_STRING_TYPES = [np.dtype(str).type, np.dtype("<S").type]
+
 
 class BinaryTableHeader(HeaderSchema):
     """Default binary table header schema."""
@@ -172,24 +174,34 @@ class Column(SchemaElement, metaclass=ABCMeta):
                 onerror=onerror,
             )
 
-        # the rest of the tests is done on a quantity object with correct dtype
-        try:
-            q = u.Quantity(
-                data, self.unit, copy=False, ndmin=self.ndim + 1, dtype=self.dtype
-            )
-        except u.UnitConversionError as e:
-            log_or_raise(str(e), WrongUnit, log=log, onerror=onerror)
+        # Handle string types, which are serialized in NumpyArrays as
+        # fixed-width character arrays. Here we should ignore the actual width,
+        # and just check that the table has a string-like column in it.
+        # Should allow unicode and ascii strings...
+        #
+        if self.dtype == str:
+            if data.dtype.type not in ALLOWED_STRING_TYPES:
+                log_or_raise(f"`{data.dtype.type}` should be a string type")
+        else:
+            # For non-strings, the rest of the tests is done on a quantity
+            # object with correct dtype, unless the type is str
+            try:
+                q = u.Quantity(
+                    data, self.unit, copy=False, ndmin=self.ndim + 1, dtype=self.dtype
+                )
+            except u.UnitConversionError as e:
+                log_or_raise(str(e), WrongUnit, log=log, onerror=onerror)
 
-        shape = q.shape[1:]
-        if self.shape is not None and self.shape != shape:
-            log_or_raise(
-                f"Shape {shape} does not match required shape {self.shape}",
-                WrongShape,
-                log=log,
-                onerror=onerror,
-            )
+            shape = q.shape[1:]
+            if self.shape is not None and self.shape != shape:
+                log_or_raise(
+                    f"Shape {shape} does not match required shape {self.shape}",
+                    WrongShape,
+                    log=log,
+                    onerror=onerror,
+                )
 
-        return q
+            return q
 
 
 class BinaryTableMeta(type):
@@ -374,3 +386,10 @@ class ComplexDouble(Column):
 
     tform_code: str = "M"
     dtype: type = np.cdouble
+
+
+@dataclass
+class String(Column):
+    """unicode or ascii string column."""
+
+    dtype: type = str

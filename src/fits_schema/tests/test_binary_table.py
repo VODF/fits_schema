@@ -319,3 +319,18 @@ def test_column_name():
 
     with pytest.warns(UserWarning):
         Int32(name="Has Spaces")
+
+
+def test_string_columns():
+    from astropy.io import fits
+    from astropy.table import Table
+
+    from fits_schema.binary_table import BinaryTable, Column
+
+    class ExampleTable(BinaryTable):
+        name = Column(dtype=str)
+        value = Column(dtype=np.int64)
+
+    test_table = Table(dict(value=[1, 2, 3, 4], name=["this", "is", "a", "test"]))
+    test_hdu = fits.BinTableHDU(data=test_table)
+    ExampleTable.validate_hdu(test_hdu)
