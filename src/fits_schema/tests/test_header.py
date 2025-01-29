@@ -3,6 +3,7 @@ from astropy.io import fits
 
 from fits_schema.exceptions import (
     RequiredMissing,
+    SchemaError,
     WrongPosition,
     WrongType,
     WrongValue,
@@ -12,12 +13,12 @@ from fits_schema.exceptions import (
 def test_length():
     from fits_schema.header import HeaderCard, HeaderSchema
 
-    with pytest.raises((ValueError, RuntimeError)):
+    with pytest.raises((SchemaError, RuntimeError)):
 
         class LengthHeader(HeaderSchema):
             MORE_THAN_8 = HeaderCard()
 
-    with pytest.raises((ValueError, RuntimeError)):
+    with pytest.raises((SchemaError, RuntimeError)):
 
         class LowerHeader(HeaderSchema):
             lowercas = HeaderCard()
@@ -147,10 +148,10 @@ def test_inheritance():
 def test_invalid_arguments():
     from fits_schema.header import HeaderCard
 
-    with pytest.raises(ValueError):
+    with pytest.raises(SchemaError):
         HeaderCard(allowed_values=[(1, 2, 3)])
 
-    with pytest.raises(TypeError):
+    with pytest.raises(SchemaError):
         # allowed values does not match allowed type
         HeaderCard(type_=str, allowed_values=1)
 

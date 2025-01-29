@@ -17,6 +17,7 @@ from astropy.io import fits
 from .exceptions import (
     AdditionalHeaderCard,
     RequiredMissing,
+    SchemaError,
     WrongPosition,
     WrongType,
     WrongValue,
@@ -59,7 +60,7 @@ class HeaderCard(SchemaElement):
                 vals = set(v.upper() if isinstance(v, str) else v for v in vals)
 
             if not all(isinstance(v, HEADER_ALLOWED_TYPES) for v in vals):
-                raise ValueError(f"Values must be instances of {HEADER_ALLOWED_TYPES}")
+                raise SchemaError(f"Values must be instances of {HEADER_ALLOWED_TYPES}")
 
         if self.type_ is not None:
             if isinstance(self.type_, Iterable):
@@ -68,7 +69,7 @@ class HeaderCard(SchemaElement):
             # check that value and type match if both supplied
             if vals is not None:
                 if any(not isinstance(v, self.type_) for v in vals):
-                    raise TypeError(
+                    raise SchemaError(
                         f"The type of `allowed_values` ({self.allowed_values}) "
                         f"and `type_` ({self.type_}) do not agree."
                     )
@@ -86,10 +87,12 @@ class HeaderCard(SchemaElement):
         """Ensure card name follows FITS conventions."""
         if self.name is not None:
             if len(self.name) > 8:
-                raise ValueError("FITS header keywords must be 8 characters or shorter")
+                raise SchemaError(
+                    "FITS header keywords must be 8 characters or shorter"
+                )
 
             if not re.match(r"^[A-Z0-9\-_]{1,8}$", self.name):
-                raise ValueError(
+                raise SchemaError(
                     "FITS header keywords must only contain"
                     " ascii uppercase, digit, _ or -"
                 )

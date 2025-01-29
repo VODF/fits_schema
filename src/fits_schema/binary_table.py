@@ -18,6 +18,7 @@ from astropy.table import Table
 
 from .exceptions import (
     RequiredMissing,
+    SchemaError,
     WrongDims,
     WrongShape,
     WrongType,
@@ -86,7 +87,7 @@ class Column(SchemaElement, metaclass=ABCMeta):
             if self.ndim is None:
                 self.ndim = len(self.shape)
             elif self.ndim != len(self.shape):
-                raise ValueError(
+                raise SchemaError(
                     f"Shape={self.shape} and ndim={self.ndim} do not match"
                 )
         else:
@@ -107,7 +108,7 @@ class Column(SchemaElement, metaclass=ABCMeta):
                 warn(
                     f"The column named '{self.name}' is recommended to contain only letters, "
                     "numbers, and underscores.",
-                    UserWarning,
+                    SchemaError,
                 )
 
     def __get__(self, instance, owner=None):
