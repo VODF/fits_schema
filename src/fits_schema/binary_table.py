@@ -99,8 +99,8 @@ class Column(SchemaElement, metaclass=ABCMeta):
             if self.ndim is None:
                 self.ndim = 0
 
-        if _is_string_dtype(self.dtype) and self.unit:
-            raise SchemaError("Units are not compatible with string columns.")
+        if (_is_string_dtype(self.dtype) or self.dtype is bool) and self.unit:
+            raise SchemaError("Units are not compatible with the type `{self.dtype}`.")
 
         if self.name:
             self._check_name()
