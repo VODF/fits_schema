@@ -99,7 +99,7 @@ class Column(SchemaElement, metaclass=ABCMeta):
             if self.ndim is None:
                 self.ndim = 0
 
-        if (self.dtype == str) and self.unit:
+        if _is_string_dtype(self.dtype) and self.unit:
             raise SchemaError("Units are not compatible with string columns.")
 
         if self.name:
@@ -186,7 +186,9 @@ class Column(SchemaElement, metaclass=ABCMeta):
         # includes the length, which we don't want to check, so we have to use
         # `np.dtype.char` to compare:
         if _is_string_dtype(self.dtype):
-            if data.dtype.char != self.dtype.char:
+            # note numpy converts back to U if the file has round-tripped to
+            # FITS, so need to check both
+            if data.dtype.char not in {"S", "U"}:
                 log_or_raise(
                     f"String column {self.name} with `{data.dtype.char}` dtype should be `{self.dtype.char}`",
                     WrongType,

@@ -335,8 +335,8 @@ def test_string_columns(tmp_path):
     test_table = Table(dict(string=["this", "test"]))
     test_table.write(outfile, format="fits", overwrite=True)
 
-    test_hdu = fits.open(outfile)[1]
-    ExampleTable.validate_hdu(test_hdu)
+    with fits.open(outfile) as fits_file:
+        ExampleTable.validate_hdu(fits_file[1])
 
     # ensure that a string with units is rejected as a schema error.
     with pytest.raises(SchemaError):
