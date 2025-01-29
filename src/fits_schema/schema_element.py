@@ -7,6 +7,8 @@ from abc import ABCMeta
 from astropy.io.votable.ucd import check_ucd
 from astropy.units import Unit
 
+from .exceptions import SchemaError
+
 # collects all references used, useful for generating a citation list.
 _REFERENCE_SET = set()
 
@@ -56,23 +58,23 @@ class SchemaElement(metaclass=ABCMeta):
         self.ivoa_name = ivoa_name
 
         if not isinstance(self.description, str):
-            raise ValueError("description should be a string")
+            raise SchemaError("description should be a string")
 
         if self.unit:
             self.unit = Unit(self.unit)
 
         if self.examples and not isinstance(self.examples, list):
-            raise ValueError("examples should be a list of strings")
+            raise SchemaError("examples should be a list of strings")
 
         if self.examples is None:
             self.examples = []
 
         if self.ucd:
             if check_ucd(self.ucd, check_controlled_vocabulary=True) is False:
-                raise ValueError(f"UCD '{self.ucd}' is not valid")
+                raise SchemaError(f"UCD '{self.ucd}' is not valid")
 
         if self.reference:
             if not isinstance(self.reference, str):
-                raise ValueError("Reference should be a string")
+                raise SchemaError("Reference should be a string")
             else:
                 _REFERENCE_SET.add(self.reference)

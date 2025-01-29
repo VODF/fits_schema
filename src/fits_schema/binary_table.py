@@ -15,6 +15,7 @@ from astropy.table import Table
 
 from .exceptions import (
     RequiredMissing,
+    SchemaError,
     WrongDims,
     WrongShape,
     WrongType,
@@ -113,7 +114,7 @@ class Column(SchemaElement, metaclass=ABCMeta):
             if self.ndim is None:
                 self.ndim = len(self.shape)
             elif self.ndim != len(self.shape):
-                raise ValueError(f"Shape={shape} and ndim={ndim} do not match")
+                raise SchemaError(f"Shape={shape} and ndim={ndim} do not match")
         else:
             # simple column by default
             if self.ndim is None:
