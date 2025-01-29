@@ -322,20 +322,22 @@ def test_column_name():
         Int32(name="Has Spaces")
 
 
-def test_string_columns():
+def test_string_columns(tmp_path):
     from astropy.io import fits
     from astropy.table import Table
 
-    from fits_schema.binary_table import BinaryTable, Column
+    from fits_schema.binary_table import BinaryTable, String
 
     class ExampleTable(BinaryTable):
-        name = Column(dtype=str)
-        value = Column(dtype=np.int64)
+        string = String()
 
-    test_table = Table(dict(value=[1, 2, 3, 4], name=["this", "is", "a", "test"]))
-    test_hdu = fits.BinTableHDU(data=test_table)
+    outfile = tmp_path / "test_string_col.fits"
+    test_table = Table(dict(string=["this", "test"]))
+    test_table.write(outfile, format="fits", overwrite=True)
+
+    test_hdu = fits.open(outfile)[1]
     ExampleTable.validate_hdu(test_hdu)
 
     # ensure that a string with units is rejected as a schema error.
     with pytest.raises(SchemaError):
-        Column(dtype=str, unit="TeV")
+        String(unit="TeV")

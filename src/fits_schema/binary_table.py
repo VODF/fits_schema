@@ -46,7 +46,9 @@ __all__ = [
 
 log = logging.getLogger(__name__)
 
-ALLOWED_STRING_TYPES = [np.dtype(str).type, np.dtype("<S").type]
+
+def _is_string_dtype(dtype):
+    return np.dtype(dtype).char in ["U", "S"]
 
 
 class BinaryTableHeader(HeaderSchema):
@@ -151,7 +153,8 @@ class Column(SchemaElement, metaclass=ABCMeta):
         try:
             # casting = 'safe' makes sure we don't change values
             # e.g. casting doubles to integers will no longer work
-            data = np.asanyarray(data).astype(self.dtype, casting="safe")
+            if not _is_string_dtype(self.dtype):
+                data = np.asanyarray(data).astype(self.dtype, casting="safe")
         except TypeError as e:
             log_or_raise(
                 f"dtype not convertible to column dtype: {e}",
@@ -179,13 +182,17 @@ class Column(SchemaElement, metaclass=ABCMeta):
             )
 
         # Handle string types, which are serialized in NumpyArrays as
-        # fixed-width character arrays. Here we should ignore the actual width,
-        # and just check that the table has a string-like column in it.
-        # Should allow unicode and ascii strings...
-        #
-        if self.dtype == str:
-            if data.dtype.type not in ALLOWED_STRING_TYPES:
-                log_or_raise(f"`{data.dtype.type}` should be a string type")
+        # fixed-width character arrays. Note that the actual dtype of the column
+        # includes the length, which we don't want to check, so we have to use
+        # `np.dtype.char` to compare:
+        if _is_string_dtype(self.dtype):
+            if data.dtype.char != self.dtype.char:
+                log_or_raise(
+                    f"String column {self.name} with `{data.dtype.char}` dtype should be `{self.dtype.char}`",
+                    WrongType,
+                    log=log,
+                    onerror=onerror,
+                )
         else:
             # For non-strings, the rest of the tests is done on a quantity
             # object with correct dtype, unless the type is str
@@ -394,6 +401,6 @@ class ComplexDouble(Column):
 
 @dataclass
 class String(Column):
-    """unicode or ascii string column."""
+    """String of bytes binary table column."""
 
-    dtype: type = str
+    dtype: type = np.dtype("S")
