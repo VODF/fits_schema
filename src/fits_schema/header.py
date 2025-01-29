@@ -12,6 +12,7 @@ from datetime import date, datetime
 from typing import Any, Self
 
 from astropy.io import fits
+from astropy.units import Unit
 
 from .exceptions import (
     AdditionalHeaderCard,
@@ -20,6 +21,7 @@ from .exceptions import (
     WrongType,
     WrongValue,
 )
+from .schema_element import SchemaElement
 from .utils import log_or_raise
 
 __all__ = ["Header", "HeaderCard"]
@@ -32,7 +34,7 @@ TABLE_KEYWORDS = {"TTYPE", "TUNIT", "TFORM", "TSCAL", "TZERO", "TDISP", "TDIM"}
 IGNORE = TABLE_KEYWORDS
 
 
-class HeaderCard:
+class HeaderCard(SchemaElement):
     """
     Schema for the entry of a FITS header.
 
@@ -60,23 +62,36 @@ class HeaderCard:
         self,
         keyword=None,
         *,
-        description: str = "",
-        required=True,
+        required: bool = True,
         allowed_values=None,
         position=None,
         type_=None,
         empty=None,
         case_insensitive=True,
+        description: str = "",
+        unit: Unit | None = None,
+        examples: list[str] | None = None,
+        reference: str | None = None,
+        ucd: str | None = None,
+        ivoa_name: str | None = None,
     ):
+        super().__init__(
+            description=description,
+            required=required,
+            unit=unit,
+            examples=examples,
+            reference=reference,
+            ucd=ucd,
+            ivoa_name=ivoa_name,
+        )
+
         self.keyword = None
         if keyword is not None:
             self.__set_name__(None, keyword)
 
-        self.required = required
         self.position = position
         self.empty = empty
         self.case_insensitive = case_insensitive
-        self.description = description
 
         vals = allowed_values
         if vals is not None:
