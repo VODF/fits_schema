@@ -327,6 +327,7 @@ def test_string_columns(tmp_path):
     from astropy.table import Table
 
     from fits_schema.binary_table import BinaryTable, String
+    from fits_schema.exceptions import WrongType
 
     class ExampleTable(BinaryTable):
         string = String()
@@ -341,3 +342,8 @@ def test_string_columns(tmp_path):
     # ensure that a string with units is rejected as a schema error.
     with pytest.raises(SchemaError):
         String(unit="TeV")
+
+    # ensure no non-ascii characters:
+    String().validate_data(np.array(["good", "also_good!?|"]))
+    with pytest.raises(WrongType):
+        String().validate_data(np.array(["good", "bâd"]))

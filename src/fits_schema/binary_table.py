@@ -195,6 +195,14 @@ class Column(SchemaElement, metaclass=ABCMeta):
                     log=log,
                     onerror=onerror,
                 )
+            if not all(s.isascii() for s in data):
+                log_or_raise(
+                    f"String column {self.name} contains non-ascii characters",
+                    WrongType,
+                    log=log,
+                    onerror=onerror,
+                )
+
         else:
             # For non-strings, the rest of the tests is done on a quantity
             # object with correct dtype, unless the type is str
