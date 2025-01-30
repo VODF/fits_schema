@@ -188,7 +188,6 @@ class HeaderMeta(type):
     def __new__(cls, name, bases, dct):
         """Instantiate and check a Header."""
         dct["__cards__"] = {}
-        dct["__slots__"] = ("_header",)
 
         for base in reversed(bases):
             if issubclass(base, Header):

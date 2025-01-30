@@ -332,3 +332,22 @@ def test_data(events_file):
     assert isinstance(events.energy, Column)
     assert len(events.event_id) == 3
     assert events.energy.unit == u.TeV
+
+
+def test_multiple_headers():
+    from fits_schema.binary_table import BinaryTable, BinaryTableHeader, Int64
+    from fits_schema.header import Header, HeaderCard
+
+    class Headers1(Header):
+        KEY1 = HeaderCard()
+        KEY2 = HeaderCard()
+
+    class Headers2(Header):
+        KEY3 = HeaderCard()
+        KEY4 = HeaderCard()
+
+    class EventsTable(BinaryTable):
+        event_id = Int64()
+
+        class __header__(BinaryTableHeader, Headers1, Headers2):
+            OBS_ID = HeaderCard(type_=int)
