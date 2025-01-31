@@ -364,23 +364,23 @@ def test_string_columns():
     from astropy.io import fits
     from astropy.table import Table
 
-    from fits_schema.binary_table import BinaryTable, BinaryTableHeader, Char
+    from fits_schema.binary_table import BinaryTable, BinaryTableHeader, String
 
     class TableWithStrings(BinaryTable):
         class __header__(BinaryTableHeader):
             pass
 
         # if shape not specified, should allow allb
-        string_col = Char()
+        string_col = String()
 
         # even for multi-dimensional string values:
-        nd_string_col = Char(ndim=1)
+        nd_string_col = String(ndim=1)
 
         # and finally ensure that if we do have a shape, it should be used:
-        shape_char_col = Char(shape=(2,))
+        shape_char_col = String(shape=(2,))
 
         # Make sure if a unicode string column is passed in, we don't fail
-        unicode_col = Char()
+        unicode_col = String()
 
     table = Table(
         {

@@ -12,6 +12,7 @@ from .binary_table import (
     Int16,
     Int32,
     Int64,
+    String,
     Table,
 )
 from .header import Header, HeaderCard
@@ -33,5 +34,5 @@ __all__ = [
     "ComplexDouble",
     "Table",
     "BitField",
-    "Char",
+    "String",
 ]

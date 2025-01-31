@@ -32,7 +32,7 @@ __all__ = [
     "Int16",
     "Int32",
     "Int64",
-    "Char",
+    "String",
     "Float",
     "Double",
     "ComplexFloat",
@@ -389,8 +389,8 @@ class Int64(Column):
     dtype = np.int64
 
 
-class Char(Column):
-    """Single byte character binary table column."""
+class String(Column):
+    """Character string binary table column."""
 
     tform_code = "A"
     dtype = np.dtype("S1")
