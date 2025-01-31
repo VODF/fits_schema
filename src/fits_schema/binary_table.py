@@ -32,7 +32,7 @@ __all__ = [
     "Int16",
     "Int32",
     "Int64",
-    "Char",
+    "String",
     "Float",
     "Double",
     "ComplexFloat",
@@ -153,7 +153,7 @@ class Column(metaclass=ABCMeta):
         if data is None:
             if self.required:
                 log_or_raise(
-                    f"Column {self.name} is required but missing",
+                    f"Column '{self.name}' is required but missing",
                     RequiredMissing,
                     log=log,
                     onerror=onerror,
@@ -165,10 +165,30 @@ class Column(metaclass=ABCMeta):
         try:
             # casting = 'safe' makes sure we don't change values
             # e.g. casting doubles to integers will no longer work
-            data = np.asanyarray(data).astype(self.dtype, casting="safe")
+
+            if np.dtype(data.dtype).char in ["S", "U"]:
+                # special case is if this is a string column, i.e. a Char field
+                # with shape=None. There we should ignore the length of the
+                # numpy dtype (e.g. 'S12' should be checked as 'S'). Note that
+                # inside a FITS file, the strings are stored as dtype('S')
+                # always, however if you call hdu.data[column], they are
+                # magically converted to 'U' by astropy, but not for astropy
+                # Tables or np.recarrays (why is not obvious).
+                data = np.asanyarray(data).astype("U", casting="safe")
+
+                # string data must be ascii only:
+                if not all(s.isascii() for s in data.ravel()):
+                    log_or_raise(
+                        f"Column '{self.name}': non-ascii data is not allowed ({data=})",
+                        WrongType,
+                        log=log,
+                        onerror=onerror,
+                    )
+            else:
+                data = np.asanyarray(data).astype(self.dtype, casting="safe")
         except TypeError as e:
             log_or_raise(
-                f"dtype not convertible to column dtype: {e}",
+                f"Column '{self.name}': dtype not convertible to column dtype: {e}",
                 WrongType,
                 log=log,
                 onerror=onerror,
@@ -176,40 +196,47 @@ class Column(metaclass=ABCMeta):
 
         if self.strict_unit and hasattr(data, "unit") and data.unit != self.unit:
             log_or_raise(
-                f"Unit {data.unit} of data does not match specified unit {self.unit}",
+                f"Column '{self.name}': unit '{data.unit}' of data does not match specified unit '{self.unit}'",
                 WrongUnit,
                 log=log,
                 onerror=onerror,
             )
 
-        # a table as one dimension more than it's rows,
+        # a table has one dimension more than it's rows,
         # we also allow a single scalar value for scalar rows
         if data.ndim != self.ndim + 1 and not (data.ndim == 0 and self.ndim == 0):
             log_or_raise(
-                f"Dimensionality of rows is {data.ndim - 1}, should be {self.ndim}",
+                f"Column '{self.name}': dimensionality of rows is {data.ndim - 1}, should be {self.ndim}",
                 WrongDims,
                 log=log,
                 onerror=onerror,
             )
 
         # the rest of the tests is done on a quantity object with correct dtype
-        try:
-            q = u.Quantity(
-                data, self.unit, copy=False, ndmin=self.ndim + 1, dtype=self.dtype
-            )
-        except u.UnitConversionError as e:
-            log_or_raise(str(e), WrongUnit, log=log, onerror=onerror)
+        if self.unit:
+            try:
+                q = u.Quantity(
+                    data, self.unit, copy=False, ndmin=self.ndim + 1, dtype=self.dtype
+                )
+                data = q
+            except u.UnitConversionError as e:
+                log_or_raise(
+                    "Column '{self.name}': " + str(e),
+                    WrongUnit,
+                    log=log,
+                    onerror=onerror,
+                )
 
-        shape = q.shape[1:]
+        shape = data.shape[1:]
         if self.shape is not None and self.shape != shape:
             log_or_raise(
-                f"Shape {shape} does not match required shape {self.shape}",
+                f"Column '{self.name}': Shape {shape} does not match required shape {self.shape}",
                 WrongShape,
                 log=log,
                 onerror=onerror,
             )
 
-        return q
+        return data
 
 
 class BinaryTableMeta(type):
@@ -362,8 +389,8 @@ class Int64(Column):
     dtype = np.int64
 
 
-class Char(Column):
-    """Single byte character binary table column."""
+class String(Column):
+    """Character string binary table column."""
 
     tform_code = "A"
     dtype = np.dtype("S1")
