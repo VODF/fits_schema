@@ -379,6 +379,9 @@ def test_string_columns():
         # and finally ensure that if we do have a shape, it should be used:
         shape_char_col = Char(shape=(2,))
 
+        # Make sure if a unicode string column is passed in, we don't fail
+        unicode_col = Char()
+
     table = Table(
         {
             "string_col": np.asarray(["This", "is a", "string column"], dtype="S"),
@@ -390,9 +393,14 @@ def test_string_columns():
                 [["This", "is"], ["an", "n-dim string"], ["string", "column"]],
                 dtype="S",
             ),
+            "unicode_col": np.asarray(["This", "is a", "string column"], dtype="U"),
         }
     )
 
     hdu = fits.BinTableHDU(data=table)
 
+    # try via HDU conversion first:
     TableWithStrings.validate_hdu(hdu)
+
+    # and also directly as a table
+    TableWithStrings(table)
