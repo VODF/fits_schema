@@ -408,6 +408,15 @@ def test_string_columns():
     # check we can set the value using any type:
     tab = TableWithStrings(table)
     tab.string_col = np.asarray(["This", "is a", "string column"], dtype="S")
+    tab.validate_data()
     tab.string_col = np.asarray(["This", "is a", "string column"], dtype="U")
+    tab.validate_data()
     tab.string_col = np.asarray(["This", "is a", "string column"])
+    tab.validate_data()
     tab.string_col = ["This", "is a", "string column"]
+    tab.validate_data()
+
+    # check that non-ascii is forbidden:
+    tab.string_col = ["This", "is a", "bad å¬≠≈ç´"]
+    with pytest.raises(WrongType):
+        tab.validate_data()

@@ -175,6 +175,15 @@ class Column(metaclass=ABCMeta):
                 # magically converted to 'U' by astropy, but not for astropy
                 # Tables or np.recarrays (why is not obvious).
                 data = np.asanyarray(data).astype("U", casting="safe")
+
+                # string data must be ascii only:
+                if not all(s.isascii() for s in data.ravel()):
+                    log_or_raise(
+                        f"Column '{self.name}': non-ascii data is not allowed ({data=})",
+                        WrongType,
+                        log=log,
+                        onerror=onerror,
+                    )
             else:
                 data = np.asanyarray(data).astype(self.dtype, casting="safe")
         except TypeError as e:
