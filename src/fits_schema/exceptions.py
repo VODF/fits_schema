@@ -39,3 +39,7 @@ class WrongValue(ValidationError):
 
 class AdditionalHeaderCard(UserWarning):
     """Issued when a header has a card not mentioned in the schema."""
+
+
+class SchemaError(TypeError):
+    """A problem with Schema Definition, not data validation."""
