@@ -404,3 +404,10 @@ def test_string_columns():
 
     # and also directly as a table
     TableWithStrings(table)
+
+    # check we can set the value using any type:
+    tab = TableWithStrings(table)
+    tab.string_col = np.asarray(["This", "is a", "string column"], dtype="S")
+    tab.string_col = np.asarray(["This", "is a", "string column"], dtype="U")
+    tab.string_col = np.asarray(["This", "is a", "string column"])
+    tab.string_col = ["This", "is a", "string column"]
