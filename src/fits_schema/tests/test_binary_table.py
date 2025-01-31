@@ -371,10 +371,17 @@ def test_string_columns():
             pass
 
         string_col = Char(shape=None)  # if shape not specified, should allow all
+        nd_string_col = Char(
+            ndim=1, shape=None
+        )  # if shape not specified, should allow all
 
     table = Table(
         {
-            "string_col": np.asarray(["This", "is", "a", "string column"], dtype="S"),
+            "string_col": np.asarray(["This", "is a", "string column"], dtype="S"),
+            "nd_string_col": np.asarray(
+                [["This", "is"], ["an", "n-dim string"], ["string", "column"]],
+                dtype="S",
+            ),
         }
     )
     hdu = fits.BinTableHDU(data=table)
