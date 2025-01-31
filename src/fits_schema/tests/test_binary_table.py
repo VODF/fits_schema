@@ -351,3 +351,32 @@ def test_multiple_headers():
 
         class __header__(BinaryTableHeader, Headers1, Headers2):
             OBS_ID = HeaderCard(type_=int)
+
+
+def test_string_columns():
+    """Ensure we can use fixed (but unknown) length string columns.
+
+    Strings are just Char columns, but where we do not want to check for the
+    exact length, as the length is dependent on the longest string stored. If
+    shape=None, which is the default, this should work.
+    """
+    import numpy as np
+    from astropy.io import fits
+    from astropy.table import Table
+
+    from fits_schema.binary_table import BinaryTable, BinaryTableHeader, Char
+
+    class TableWithStrings(BinaryTable):
+        class __header__(BinaryTableHeader):
+            pass
+
+        string_col = Char(shape=None)  # if shape not specified, should allow all
+
+    table = Table(
+        {
+            "string_col": np.asarray(["This", "is", "a", "string column"], dtype="S"),
+        }
+    )
+    hdu = fits.BinTableHDU(data=table)
+
+    TableWithStrings.validate_hdu(hdu)
