@@ -153,7 +153,7 @@ class Column(metaclass=ABCMeta):
         if data is None:
             if self.required:
                 log_or_raise(
-                    f"Column {self.name} is required but missing",
+                    f"Column '{self.name}' is required but missing",
                     RequiredMissing,
                     log=log,
                     onerror=onerror,
@@ -179,7 +179,7 @@ class Column(metaclass=ABCMeta):
                 data = np.asanyarray(data).astype(self.dtype, casting="safe")
         except TypeError as e:
             log_or_raise(
-                f"dtype not convertible to column dtype: {e}",
+                f"Column '{self.name}': dtype not convertible to column dtype: {e}",
                 WrongType,
                 log=log,
                 onerror=onerror,
@@ -187,17 +187,17 @@ class Column(metaclass=ABCMeta):
 
         if self.strict_unit and hasattr(data, "unit") and data.unit != self.unit:
             log_or_raise(
-                f"Unit {data.unit} of data does not match specified unit {self.unit}",
+                f"Column '{self.name}': unit '{data.unit}' of data does not match specified unit '{self.unit}'",
                 WrongUnit,
                 log=log,
                 onerror=onerror,
             )
 
-        # a table as one dimension more than it's rows,
+        # a table has one dimension more than it's rows,
         # we also allow a single scalar value for scalar rows
         if data.ndim != self.ndim + 1 and not (data.ndim == 0 and self.ndim == 0):
             log_or_raise(
-                f"Dimensionality of rows is {data.ndim - 1}, should be {self.ndim}",
+                f"Column '{self.name}': dimensionality of rows is {data.ndim - 1}, should be {self.ndim}",
                 WrongDims,
                 log=log,
                 onerror=onerror,
@@ -211,12 +211,17 @@ class Column(metaclass=ABCMeta):
                 )
                 data = q
             except u.UnitConversionError as e:
-                log_or_raise(str(e), WrongUnit, log=log, onerror=onerror)
+                log_or_raise(
+                    "Column '{self.name}': " + str(e),
+                    WrongUnit,
+                    log=log,
+                    onerror=onerror,
+                )
 
         shape = data.shape[1:]
         if self.shape is not None and self.shape != shape:
             log_or_raise(
-                f"Shape {shape} does not match required shape {self.shape}",
+                f"Column '{self.name}': Shape {shape} does not match required shape {self.shape}",
                 WrongShape,
                 log=log,
                 onerror=onerror,
