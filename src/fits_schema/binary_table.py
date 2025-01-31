@@ -165,7 +165,18 @@ class Column(metaclass=ABCMeta):
         try:
             # casting = 'safe' makes sure we don't change values
             # e.g. casting doubles to integers will no longer work
-            data = np.asanyarray(data).astype(self.dtype, casting="safe")
+
+            if np.dtype(data.dtype).char in ["S", "U"]:
+                # special case is if this is a string column, i.e. a Char field
+                # with shape=None. There we should ignore the length of the
+                # numpy dtype (e.g. 'S12' should be checked as 'S'). Note that
+                # inside a FITS file, the strings are stored as dtype('S')
+                # always, however if you call hdu.data[column], they are
+                # magically converted to 'U' by astropy, but not for astropy
+                # Tables or np.recarrays (why is not obvious).
+                data = np.asanyarray(data).astype("U", casting="safe")
+            else:
+                data = np.asanyarray(data).astype(self.dtype, casting="safe")
         except TypeError as e:
             log_or_raise(
                 f"dtype not convertible to column dtype: {e}",
@@ -193,14 +204,16 @@ class Column(metaclass=ABCMeta):
             )
 
         # the rest of the tests is done on a quantity object with correct dtype
-        try:
-            q = u.Quantity(
-                data, self.unit, copy=False, ndmin=self.ndim + 1, dtype=self.dtype
-            )
-        except u.UnitConversionError as e:
-            log_or_raise(str(e), WrongUnit, log=log, onerror=onerror)
+        if self.unit:
+            try:
+                q = u.Quantity(
+                    data, self.unit, copy=False, ndmin=self.ndim + 1, dtype=self.dtype
+                )
+                data = q
+            except u.UnitConversionError as e:
+                log_or_raise(str(e), WrongUnit, log=log, onerror=onerror)
 
-        shape = q.shape[1:]
+        shape = data.shape[1:]
         if self.shape is not None and self.shape != shape:
             log_or_raise(
                 f"Shape {shape} does not match required shape {self.shape}",
@@ -209,7 +222,7 @@ class Column(metaclass=ABCMeta):
                 onerror=onerror,
             )
 
-        return q
+        return data
 
 
 class BinaryTableMeta(type):
