@@ -370,10 +370,14 @@ def test_string_columns():
         class __header__(BinaryTableHeader):
             pass
 
-        string_col = Char(shape=None)  # if shape not specified, should allow all
-        nd_string_col = Char(
-            ndim=1, shape=None
-        )  # if shape not specified, should allow all
+        # if shape not specified, should allow allb
+        string_col = Char()
+
+        # even for multi-dimensional string values:
+        nd_string_col = Char(ndim=1)
+
+        # and finally ensure that if we do have a shape, it should be used:
+        shape_char_col = Char(shape=(2,))
 
     table = Table(
         {
@@ -382,8 +386,13 @@ def test_string_columns():
                 [["This", "is"], ["an", "n-dim string"], ["string", "column"]],
                 dtype="S",
             ),
+            "shape_char_col": np.asarray(
+                [["This", "is"], ["an", "n-dim string"], ["string", "column"]],
+                dtype="S",
+            ),
         }
     )
+
     hdu = fits.BinTableHDU(data=table)
 
     TableWithStrings.validate_hdu(hdu)
