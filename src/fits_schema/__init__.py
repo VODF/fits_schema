@@ -33,4 +33,5 @@ __all__ = [
     "ComplexDouble",
     "Table",
     "BitField",
+    "Char",
 ]
