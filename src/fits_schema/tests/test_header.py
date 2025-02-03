@@ -218,3 +218,18 @@ def test_grouped_headers():
     assert "KEY1" in grouped[Group1]
     assert "KEY2" in grouped[Group2]
     assert "COMPKEY" in grouped[CompoundHeader]
+
+
+def test_unknown_keyword():
+    from fits_schema.header import Header, HeaderCard
+
+    class MyHeader(Header):
+        KEY1 = HeaderCard()
+        KEY2 = HeaderCard()
+
+    header = MyHeader(fits.Header({"KEY1": 1, "KEY2": 2.3}))
+    assert header.KEY1 == 1
+    assert header.KEY2 == 2.3
+
+    with pytest.raises(TypeError, match="Unknown keyword: 'FOO'"):
+        header.FOO = "1"
