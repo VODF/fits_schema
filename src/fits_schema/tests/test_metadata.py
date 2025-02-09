@@ -6,12 +6,14 @@ def test_headers_and_cols_with_metadata():
 
     from fits_schema import Header, HeaderCard
 
+    fits_v4 = "FITS Standard, v4"
+
     class ReferencePosition(Header):
         """Reference position of the observatory, for time and coordinates."""
 
         TREFPOS = HeaderCard(
             description="Code for the spatial location at which the observation time is valid",
-            reference="FITS Standard, v4",
+            reference=fits_v4,
             type_=str,
             allowed_values=["TOPOCENTER"],
         )
@@ -22,7 +24,7 @@ def test_headers_and_cols_with_metadata():
             type_=float,
             unit=u.deg,
             ucd="pos.earth.lat",
-            reference="FITS Standard, v4",
+            reference=fits_v4,
         )
         OBSGEO_L = HeaderCard(
             keyword="OBSGEO-L",
@@ -30,7 +32,7 @@ def test_headers_and_cols_with_metadata():
             type_=float,
             unit=u.deg,
             ucd="pos.earth.lon",
-            reference="FITS Standard, v4",
+            reference=fits_v4,
         )
         OBSGEO_H = HeaderCard(
             keyword="OBSGEO-H",
@@ -38,5 +40,8 @@ def test_headers_and_cols_with_metadata():
             type_=float,
             unit=u.m,
             ucd="pos.earth.altitude",
-            reference="FITS Standard, v4",
+            reference=fits_v4,
         )
+
+    assert ReferencePosition.OBSGEO_B.reference == fits_v4
+    assert ReferencePosition.OBSGEO_B.description is not None
