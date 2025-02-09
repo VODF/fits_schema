@@ -9,7 +9,7 @@ import logging
 import re
 from collections.abc import Iterable
 from datetime import date, datetime
-from typing import Self, Union
+from typing import Any, Self, Union
 
 from astropy.io import fits
 from astropy.units import Unit
@@ -245,7 +245,7 @@ class Header(metaclass=HeaderMeta):
     """
 
     def __init__(self, header):
-        self._header = header
+        object.__setattr__(self, "_header", header)
 
     @classmethod
     def _header_schemas(cls) -> list[Self]:
@@ -286,7 +286,7 @@ class Header(metaclass=HeaderMeta):
                 onerror=onerror,
             )
 
-        # no go through each of the header items and validate them with the schema
+        # now go through each of the header items and validate them with the schema
         for pos, card in enumerate(header.cards):
             kw = card.keyword
             if kw not in cls.__cards__:
@@ -300,6 +300,10 @@ class Header(metaclass=HeaderMeta):
                 continue
 
             cls.__cards__[card.keyword].validate(card, pos, onerror)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Prohibit setting non-specified keywords."""
+        raise TypeError(f"Unknown keyword: {name!r}")
 
     @classmethod
     def update(cls, other_schema):

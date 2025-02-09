@@ -174,22 +174,63 @@ def test_additional():
 def test_case():
     from fits_schema.header import Header, HeaderCard
 
-    class Header(Header):
+    class ExampleHeader(Header):
         TEST = HeaderCard(allowed_values={"foo"})
 
     h = fits.Header()
     h["TEST"] = "foo"
-    Header.validate_header(h)
+    ExampleHeader.validate_header(h)
 
     h["TEST"] = "Foo"
-    Header.validate_header(h)
+    ExampleHeader.validate_header(h)
 
     h["TEST"] = "FOO"
-    Header.validate_header(h)
+    ExampleHeader.validate_header(h)
 
-    class Header(Header):
+    class ExampleHeader2(Header):
         TEST = HeaderCard(allowed_values={"foo"}, case_insensitive=False)
 
     h["TEST"] = "Foo"
     with pytest.raises(WrongValue):
-        Header.validate_header(h)
+        ExampleHeader2.validate_header(h)
+
+
+def test_grouped_headers():
+    """Check grouped list of headers from a Header subclass with multiple inheritance."""
+    from fits_schema.header import Header, HeaderCard
+
+    class Group1(Header):
+        """Group 1."""
+
+        KEY1 = HeaderCard()
+
+    class Group2(Header):
+        """Group 2."""
+
+        KEY2 = HeaderCard()
+
+    class CompoundHeader(Group1, Group2):
+        """Compound."""
+
+        COMPKEY = HeaderCard()
+
+    grouped = CompoundHeader.grouped_cards()
+
+    assert "KEY1" in grouped[Group1]
+    assert "KEY2" in grouped[Group2]
+    assert "COMPKEY" in grouped[CompoundHeader]
+
+
+def test_unknown_keyword():
+    from fits_schema.header import Header, HeaderCard
+
+    class MyHeader(Header):
+        KEY1 = HeaderCard()
+        KEY2 = HeaderCard()
+
+    header = MyHeader(fits.Header({"KEY1": 1, "KEY2": 2.3}))
+    assert header.KEY1 == 1
+    assert header.KEY2 == 2.3
+
+    with pytest.raises(TypeError, match="Unknown keyword: 'FOO'"):
+        header.FOO = "1"
