@@ -26,26 +26,24 @@ class SchemaElement(metaclass=ABCMeta):
         ucd: str | None = None,
         ivoa_name: str | None = None,
     ):
-        """Initialize HeaderSchema.
+        """Set common metadata.
 
         Properties
         ----------
-        description:
+        description: str
             human-readable description
-        required:
+        required: bool
             if this item is optional, set to false
-        unit:
+        unit: Unit | str
             The unit associated with the element. For Columns, this will be verified if set,
             for HeaderCards, it is only for documentation purposes.
-
-        Examples
-        --------
+        examples: list[str]
             list of examples, for documentation
-        reference:
+        reference: str
             Citation for the origin of this attribute.
-        ucd:
-            IVOA uniform content descriptor string
-        ivoa_name:
+        ucd: str
+            IVOA uniform content descriptor string.
+        ivoa_name: str
             If this element is associated with an IVOA data model, provide the
             ``ModelName.keyword``, for example ``ObsCore.obs_publisher_did``
         """

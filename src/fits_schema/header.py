@@ -9,7 +9,7 @@ import logging
 import re
 from collections.abc import Iterable
 from datetime import date, datetime
-from typing import Self
+from typing import Self, Union
 
 from astropy.io import fits
 from astropy.units import Unit
@@ -34,6 +34,8 @@ HEADER_ALLOWED_TYPES = (str, bool, int, float, complex, date, datetime)
 TABLE_KEYWORDS = {"TTYPE", "TUNIT", "TFORM", "TSCAL", "TZERO", "TDISP", "TDIM"}
 IGNORE = TABLE_KEYWORDS
 
+AllowedHeaderType = Union[*HEADER_ALLOWED_TYPES]
+
 
 class HeaderCard(SchemaElement):
     """
@@ -46,16 +48,18 @@ class HeaderCard(SchemaElement):
         useful to define keywords containing hyphens or starting with numbers
     required: bool
         If this card is required
-    allowed_values: instance of any in ``HEADER_ALLOWED_TYPES`` or iterable of that
-        If specified, card must have on of these values
-    position: int or None
+    allowed_values:  AllowedHeaderType | Iterable[AllowedHeaderType] | None
+        If specified, card must have on of these values.
+    position: int | None
         if not None, the card must be at this position in the header,
         starting with the first card at 0
-    type: one or a tuple of the types in ``HEADER_ALLOWED_TYPES``
+    type: HeaderAllowedType | None
+        Type of the value in the header, which will be converted
+        from the stored string representation. None for no check.
     empty: True, False or None
         If True, value must be empty, if False must not be empty,
         if None, no check if a value is present is performed
-    case_insensitive: True
+    case_insensitive: bool
         match str values case insensitively
     """
 
@@ -64,11 +68,11 @@ class HeaderCard(SchemaElement):
         keyword=None,
         *,
         required: bool = True,
-        allowed_values=None,
-        position=None,
-        type_=None,
-        empty=None,
-        case_insensitive=True,
+        allowed_values: AllowedHeaderType | Iterable[AllowedHeaderType] | None = None,
+        position: int | None = None,
+        type_: AllowedHeaderType | None = None,
+        empty: bool | None = None,
+        case_insensitive: bool = True,
         description: str = "",
         unit: Unit | None = None,
         examples: list[str] | None = None,
