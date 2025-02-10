@@ -9,17 +9,20 @@ import logging
 import re
 from collections.abc import Iterable
 from datetime import date, datetime
-from typing import Any, Self
+from typing import Any, Self, Union
 
 from astropy.io import fits
+from astropy.units import Unit
 
 from .exceptions import (
     AdditionalHeaderCard,
     RequiredMissing,
+    SchemaError,
     WrongPosition,
     WrongType,
     WrongValue,
 )
+from .schema_element import SchemaElement
 from .utils import log_or_raise
 
 __all__ = ["Header", "HeaderCard"]
@@ -31,8 +34,10 @@ HEADER_ALLOWED_TYPES = (str, bool, int, float, complex, date, datetime)
 TABLE_KEYWORDS = {"TTYPE", "TUNIT", "TFORM", "TSCAL", "TZERO", "TDISP", "TDIM"}
 IGNORE = TABLE_KEYWORDS
 
+AllowedHeaderType = Union[*HEADER_ALLOWED_TYPES]
 
-class HeaderCard:
+
+class HeaderCard(SchemaElement):
     """
     Schema for the entry of a FITS header.
 
@@ -43,16 +48,18 @@ class HeaderCard:
         useful to define keywords containing hyphens or starting with numbers
     required: bool
         If this card is required
-    allowed_values: instance of any in ``HEADER_ALLOWED_TYPES`` or iterable of that
-        If specified, card must have on of these values
-    position: int or None
+    allowed_values:  AllowedHeaderType | Iterable[AllowedHeaderType] | None
+        If specified, card must have on of these values.
+    position: int | None
         if not None, the card must be at this position in the header,
         starting with the first card at 0
-    type: one or a tuple of the types in ``HEADER_ALLOWED_TYPES``
+    type: HeaderAllowedType | None
+        Type of the value in the header, which will be converted
+        from the stored string representation. None for no check.
     empty: True, False or None
         If True, value must be empty, if False must not be empty,
         if None, no check if a value is present is performed
-    case_insensitive: True
+    case_insensitive: bool
         match str values case insensitively
     """
 
@@ -60,23 +67,37 @@ class HeaderCard:
         self,
         keyword=None,
         *,
+        required: bool = True,
+        allowed_values: AllowedHeaderType | Iterable[AllowedHeaderType] | None = None,
+        position: int | None = None,
+        type_: AllowedHeaderType | None = None,
+        empty: bool | None = None,
+        case_insensitive: bool = True,
         description: str = "",
-        required=True,
-        allowed_values=None,
-        position=None,
-        type_=None,
-        empty=None,
-        case_insensitive=True,
+        unit: Unit | None = None,
+        examples: list[str] | None = None,
+        reference: str | None = None,
+        ucd: str | None = None,
+        ivoa_name: str | None = None,
     ):
+        super().__init__(
+            description=description,
+            required=required,
+            unit=unit,
+            examples=examples,
+            reference=reference,
+            ucd=ucd,
+            ivoa_name=ivoa_name,
+        )
+
         self.keyword = None
         if keyword is not None:
             self.__set_name__(None, keyword)
 
-        self.required = required
+        self.allowed_values = allowed_values
         self.position = position
         self.empty = empty
         self.case_insensitive = case_insensitive
-        self.description = description
 
         vals = allowed_values
         if vals is not None:
@@ -89,7 +110,7 @@ class HeaderCard:
                 vals = set(v.upper() if isinstance(v, str) else v for v in vals)
 
             if not all(isinstance(v, HEADER_ALLOWED_TYPES) for v in vals):
-                raise ValueError(f"Values must be instances of {HEADER_ALLOWED_TYPES}")
+                raise SchemaError(f"Values must be instances of {HEADER_ALLOWED_TYPES}")
 
         self.type = type_
         if type_ is not None:
@@ -99,8 +120,9 @@ class HeaderCard:
             # check that value and type match if both supplied
             if vals is not None:
                 if any(not isinstance(v, type_) for v in vals):
-                    raise TypeError(
-                        f"`values` must be of type `type_`({type_}) or None"
+                    raise SchemaError(
+                        f"The type of `allowed_values` ({self.allowed_values}) "
+                        f"and `type` ({self.type}) do not agree."
                     )
         else:
             # if only value is supplied, deduce type from value
@@ -113,10 +135,12 @@ class HeaderCard:
         """Rename to keyword if existing and check name style."""
         if self.keyword is None:
             if len(name) > 8:
-                raise ValueError("FITS header keywords must be 8 characters or shorter")
+                raise SchemaError(
+                    "FITS header keywords must be 8 characters or shorter"
+                )
 
             if not re.match(r"^[A-Z0-9\-_]{1,8}$", name):
-                raise ValueError(
+                raise SchemaError(
                     "FITS header keywords must only contain"
                     " ascii uppercase, digit, _ or -"
                 )

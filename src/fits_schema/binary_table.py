@@ -15,12 +15,14 @@ from astropy.table import Table
 
 from .exceptions import (
     RequiredMissing,
+    SchemaError,
     WrongDims,
     WrongShape,
     WrongType,
     WrongUnit,
 )
 from .header import Header, HeaderCard
+from .schema_element import SchemaElement
 from .utils import log_or_raise
 
 __all__ = [
@@ -56,7 +58,7 @@ class BinaryTableHeader(Header):
     EXTNAME = HeaderCard(required=False, type_=str)
 
 
-class Column(metaclass=ABCMeta):
+class Column(SchemaElement, metaclass=ABCMeta):
     """A binary table column descriptor.
 
     Attributes
@@ -79,21 +81,32 @@ class Column(metaclass=ABCMeta):
     def __init__(
         self,
         *,
-        unit=None,
         strict_unit=False,
-        required=True,
         name=None,
         ndim=None,
         shape=None,
         description: str = "",
+        required: bool = True,
+        unit: u.Unit | None = None,
+        examples: list[str] | None = None,
+        reference: str | None = None,
+        ucd: str | None = None,
+        ivoa_name: str | None = None,
     ):
-        self.required = required
-        self.unit = unit
+        super().__init__(
+            description=description,
+            required=required,
+            unit=unit,
+            examples=examples,
+            reference=reference,
+            ucd=ucd,
+            ivoa_name=ivoa_name,
+        )
+
         self.strict_unit = strict_unit
         self.name = name
         self.shape = shape
         self.ndim = ndim
-        self.description = description
 
         if self.shape is not None:
             self.shape = tuple(shape)
@@ -101,7 +114,7 @@ class Column(metaclass=ABCMeta):
             if self.ndim is None:
                 self.ndim = len(self.shape)
             elif self.ndim != len(self.shape):
-                raise ValueError(f"Shape={shape} and ndim={ndim} do not match")
+                raise SchemaError(f"Shape={shape} and ndim={ndim} do not match")
         else:
             # simple column by default
             if self.ndim is None:
