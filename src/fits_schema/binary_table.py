@@ -64,19 +64,21 @@ class Column(SchemaElement, metaclass=ABCMeta):
 
     Attributes
     ----------
-    unit: astropy.units.Unit
+    unit: astropy.units.Unit | None
         unit of the column
     strict_unit: bool
         If True, the unit must match exactly, not only be convertible.
     required: bool
         If this column is required (True) or optional (False)
-    name: str
+    name: str | None
         Use to specify a different column name than the class attribute name.
-    ndim: int
+    ndim: int | None
         Dimensionality of a single row, numbers have ndim=0.
         The resulting data column has ``ndim_col = ndim + 1``
-    shape: Tuple[int]
+    shape: tuple[int] | None
         Shape of a single row.
+    format: str | None
+        Fortran-style text format string (TFORM#) for converting values to strings.
     """
 
     def __init__(
@@ -84,8 +86,9 @@ class Column(SchemaElement, metaclass=ABCMeta):
         *,
         strict_unit=False,
         name=None,
-        ndim=None,
-        shape=None,
+        ndim: int | None = None,
+        shape: tuple[int] | None = None,
+        format: str | None = None,
         description: str = "",
         required: bool = True,
         unit: u.Unit | None = None,
@@ -108,6 +111,7 @@ class Column(SchemaElement, metaclass=ABCMeta):
         self.name = name
         self.shape = shape
         self.ndim = ndim
+        self.format = format
 
         if self.shape is not None:
             self.shape = tuple(shape)
@@ -159,8 +163,13 @@ class Column(SchemaElement, metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def dtype():
+    def dtype() -> type:
         """Equivalent numpy dtype."""
+
+    @property
+    @abstractmethod
+    def tform_code() -> str:
+        """FITS Format code."""
 
     def validate_data(self, data, onerror="raise"):
         """Validate the data of this column in table."""
