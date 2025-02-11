@@ -196,12 +196,12 @@ class Column(SchemaElement, metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def dtype() -> type:
+    def dtype(self) -> type:
         """Equivalent numpy dtype."""
 
     @property
     @abstractmethod
-    def tform_code() -> str:
+    def tform_code(self) -> str:
         """FITS Format code."""
 
     def validate_data(self, data, onerror="raise"):
