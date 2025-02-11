@@ -105,8 +105,8 @@ def column_template(column: Column) -> Generator[str]:
         yield f"TUCD#  = {column.ucd:20s}"
     if column.ndim:
         yield f"TDIM#  = {column.ndim:<20d} / value is a {column.ndim}-dimensional array"
-    # if column.format:
-    #     yield f"TDISP#  = {column.format:20s} / display format"
+    if column.display_format:
+        yield f"TDISP#  = {column.display_format:20s} / display format (FORTRAN-style)"
     yield ""  # spacer
 
 
