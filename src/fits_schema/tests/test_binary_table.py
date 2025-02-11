@@ -351,3 +351,10 @@ def test_multiple_headers():
 
         class __header__(BinaryTableHeader, Headers1, Headers2):
             OBS_ID = HeaderCard(type_=int)
+
+
+def test_column_format():
+    from fits_schema.binary_table import Int64
+
+    col = Int64(name="test", display_format="2F8.2")
+    assert col
