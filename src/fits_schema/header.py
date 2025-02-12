@@ -7,6 +7,7 @@ https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
 
 import logging
 import re
+from collections import defaultdict
 from collections.abc import Iterable
 from datetime import date, datetime
 from typing import Any, Self, Union
@@ -248,28 +249,50 @@ class Header(metaclass=HeaderMeta):
         object.__setattr__(self, "_header", header)
 
     @classmethod
-    def _header_schemas(cls) -> list[Self]:
-        """Return a list of Header parents."""
-        return list(
-            reversed(
-                [
-                    cls,
-                ]
-                + [base for base in cls.__bases__ if issubclass(base, Header)]
-            )
-        )
+    def _header_cards(cls):
+        """Return list of *local* HeaderCards in this class.
+
+        This is not the same as the __cards__ attribute, which is an aggregate
+        of all cards including those from the parents.
+        """
+        return [c for c in cls.__dict__.values() if isinstance(c, HeaderCard)]
+
+    @classmethod
+    def _header_bases(cls) -> list:
+        """Return a flat list of parent Header classes.
+
+        Returns
+        -------
+        list | list[list] :
+            list of all parent Header classes, including this one.
+
+        """
+        if cls is Header:
+            return []
+
+        header_bases = [
+            cls,
+        ]
+
+        for base in cls.__bases__:
+            if issubclass(base, Header):
+                header_bases += base._header_bases()
+
+        return header_bases
 
     @classmethod
     def grouped_cards(cls) -> dict[Self, list[HeaderCard]]:
         """Return a list of cards grouped by parent Header class."""
+        groups = defaultdict(dict)
         seen = set()
-        group = {}
 
-        for schema in cls._header_schemas():
-            group[schema] = {k: c for k, c in schema.__cards__.items() if k not in seen}
-            seen.update(schema.__cards__.keys())
+        for schema in cls._header_bases():
+            for card in schema._header_cards():
+                if card.keyword not in seen:
+                    groups[schema][card.keyword] = card
+                    seen.add(card.keyword)
 
-        return group
+        return groups
 
     @classmethod
     def validate_header(cls, header: fits.Header, onerror="raise"):

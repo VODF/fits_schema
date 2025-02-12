@@ -203,6 +203,7 @@ def test_grouped_headers():
         """Group 1."""
 
         KEY1 = HeaderCard()
+        OVERRIDE = HeaderCard()
 
     class Group2(Header):
         """Group 2."""
@@ -213,12 +214,16 @@ def test_grouped_headers():
         """Compound."""
 
         COMPKEY = HeaderCard()
+        OVERRIDE = HeaderCard(allowed_values="overridden", unit="m")
 
     grouped = CompoundHeader.grouped_cards()
 
     assert "KEY1" in grouped[Group1]
     assert "KEY2" in grouped[Group2]
     assert "COMPKEY" in grouped[CompoundHeader]
+
+    # ensure inheritance works in the groups
+    assert grouped[CompoundHeader]["OVERRIDE"].unit is not None
 
 
 def test_unknown_keyword():
