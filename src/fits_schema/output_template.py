@@ -32,7 +32,7 @@ def type_str(element: SchemaElement):
     if not element.type:
         return ""
 
-    # WHy not just make all type values to be tuples? Having to support both
+    # TODO: Why not just make all type values to be tuples? Having to support both
     # scalar and tuple is annoying.
     if isinstance(element.type, Iterable):
         return f"({','.join(x.__name__ for x in element.type)}) "

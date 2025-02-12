@@ -48,23 +48,16 @@ _string_length = np.vectorize(len)
 
 FORTRAN_FORMAT_REGEX = re.compile(
     r"""
-    \s*                    # Optional spaces
-    (\d+)?                 # Optional repeat count
-    (                      # Group for format descriptors
-        I\d+               | # Integer format
-        F\d+\.\d+          | # Floating point format
-        E\d+\.\d+          | # Scientific notation format
-        D\d+\.\d+          | # Double precision scientific format
-        A\d+               | # String format
-        L\d+               | # Logical format
-        X\d+               | # Space format
-        G\d+\.\d+          | # General format
-        T\d+               | # Tab format
-        '(.*?)'            | # Literal string format
-    )
-    \s*                    # Optional spaces
+    ^(
+        A\d+ |                                  # Character: Aw (A followed by digits)
+        [IBOZ]\d+(\.\d+)? |                     # Integer: Iw[.m], Binary/Octal/Hex: Bw[.m], Ow[.m], Zw[.m]
+        F\d+\.\d+ |                             # Fixed-point: Fw.d
+        (E|D|G)\d+\.\d+(E\d+)? |                # Exponential/General: Ew.d[Ee], Dw.d[Ee], Gw.d[Ee]
+        EN\d+\.\d+ |                            # Engineering: ENw.d
+        ES\d+\.\d+                              # Scientific: ESw.d
+    )$
 """,
-    re.VERBOSE | re.IGNORECASE,
+    re.VERBOSE,
 )
 
 
@@ -138,8 +131,8 @@ class Column(SchemaElement, metaclass=ABCMeta):
         self.ndim = ndim
         self.display_format = display_format
 
-        if self.display_format and not re.match(
-            FORTRAN_FORMAT_REGEX, self.display_format
+        if self.display_format and not FORTRAN_FORMAT_REGEX.fullmatch(
+            self.display_format
         ):
             raise SchemaError(
                 f"Column {self.name}: display format '{self.display_format}'"
