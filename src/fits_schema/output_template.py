@@ -115,12 +115,13 @@ def bintable_template(hdu: BinaryTable) -> Generator[str]:
     yield DOUBLE_LINE
     yield f"/ HDU: {hdu.__name__}"  # should put in the EXTNAME here...
     yield "/ DESCRIPTION: "
-    yield from wrap(
-        hdu.__doc__,
-        initial_indent="/    ",
-        subsequent_indent="/    ",
-        drop_whitespace=True,
-    )
+    if hdu.__doc__:
+        yield from wrap(
+            hdu.__doc__,
+            initial_indent="/    ",
+            subsequent_indent="/    ",
+            drop_whitespace=True,
+        )
 
     yield SINGLE_LINE
     yield "/ HEADERS: "
@@ -129,7 +130,7 @@ def bintable_template(hdu: BinaryTable) -> Generator[str]:
 
     # output the headers, but no the BinaryTableHeaders ones, which we want to
     # treat specially
-    yield from header_template(hdu.__header__)  # exclude=[BinaryTableHeader])
+    yield from header_template(hdu.__header__)
 
     yield SINGLE_LINE
     yield "/ COLUMNS: "
