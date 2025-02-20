@@ -382,6 +382,12 @@ def test_string_columns():
         # Make sure if a unicode string column is passed in, we don't fail
         unicode_col = String()
 
+        # column with a maximum string length of 10 characters
+        max_col = String(max_string_length=10)
+
+        # column with a maximum string length of 10 characters
+        min_col = String(min_string_length=4)
+
     table = Table(
         {
             "string_col": np.asarray(["This", "is a", "string column"], dtype="S"),
@@ -394,6 +400,8 @@ def test_string_columns():
                 dtype="S",
             ),
             "unicode_col": np.asarray(["This", "is a", "string column"], dtype="U"),
+            "max_col": np.asarray(["short", "strings", "are ok"], dtype="S"),
+            "min_col": np.asarray(["must", "be at least", "4 chars"], dtype="S"),
         }
     )
 
@@ -417,6 +425,21 @@ def test_string_columns():
     tab.validate_data()
 
     # check that non-ascii is forbidden:
+    tab = TableWithStrings(table)
     tab.string_col = ["This", "is a", "bad å¬≠≈ç´"]
     with pytest.raises(WrongType):
+        tab.validate_data()
+
+    tab = TableWithStrings(table)
+    tab.max_col = [
+        "This is far too long",
+        "a string",
+        "that should be under 10 chars",
+    ]
+    with pytest.raises(WrongShape):
+        tab.validate_data()
+
+    tab = TableWithStrings(table)
+    tab.min_col = ["This is ok", "not", "ok"]
+    with pytest.raises(WrongShape):
         tab.validate_data()

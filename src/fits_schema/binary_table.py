@@ -40,6 +40,7 @@ __all__ = [
 ]
 
 log = logging.getLogger(__name__)
+_string_length = np.vectorize(len)
 
 
 class BinaryTableHeader(Header):
@@ -393,7 +394,50 @@ class String(Column):
     """Character string binary table column."""
 
     tform_code = "A"
-    dtype = np.dtype("S1")
+    dtype = np.dtype("S")
+
+    def __init__(
+        self,
+        *,
+        max_string_length: int = None,
+        min_string_length: int = None,
+        **kwargs,
+    ):
+        """
+        Construct a String column.
+
+        Parameters
+        ----------
+        string_length: int | None
+           require exact string length
+        """
+        super().__init__(**kwargs)
+        self.max_string_length = max_string_length
+        self.min_string_length = min_string_length
+
+    def validate_data(self, data, onerror="raise"):
+        """Validate the data of this column in table."""
+        super().validate_data(data, onerror=onerror)
+
+        if self.max_string_length and np.any(
+            _string_length(data) > self.max_string_length
+        ):
+            log_or_raise(
+                f"Column '{self.name}': strings must not be longer than {self.max_string_length} characters.",
+                WrongShape,
+                log=log,
+                onerror=onerror,
+            )
+
+        if self.min_string_length and np.any(
+            _string_length(data) < self.min_string_length
+        ):
+            log_or_raise(
+                f"Column '{self.name}': strings must not be shorter than {self.min_string_length} characters.",
+                WrongShape,
+                log=log,
+                onerror=onerror,
+            )
 
 
 class Float(Column):
