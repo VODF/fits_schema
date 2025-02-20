@@ -174,12 +174,12 @@ class Column(metaclass=ABCMeta):
                 # always, however if you call hdu.data[column], they are
                 # magically converted to 'U' by astropy, but not for astropy
                 # Tables or np.recarrays (why is not obvious).
-                data = np.asanyarray(data).astype("U", casting="safe")
-
-                # string data must be ascii only:
-                if not all(s.isascii() for s in data.ravel()):
+                try:
+                    # string data must be ascii only, so ensure it by casting:
+                    data = np.asanyarray(data).astype("S")
+                except UnicodeError as err:
                     log_or_raise(
-                        f"Column '{self.name}': non-ascii data is not allowed ({data=})",
+                        f"Column '{self.name}': non-ascii data is not allowed ({data=}): {err}",
                         WrongType,
                         log=log,
                         onerror=onerror,
