@@ -6,6 +6,7 @@ https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
 """
 
 import logging
+import re
 from abc import ABCMeta, abstractmethod
 
 import astropy.units as u
@@ -45,6 +46,21 @@ log = logging.getLogger(__name__)
 _string_length = np.vectorize(len)
 
 
+FORTRAN_FORMAT_REGEX = re.compile(
+    r"""
+    ^(
+        A\d+ |                                  # Character: Aw (A followed by digits)
+        [IBOZ]\d+(\.\d+)? |                     # Integer: Iw[.m], Binary/Octal/Hex: Bw[.m], Ow[.m], Zw[.m]
+        F\d+\.\d+ |                             # Fixed-point: Fw.d
+        (E|D|G)\d+\.\d+(E\d+)? |                # Exponential/General: Ew.d[Ee], Dw.d[Ee], Gw.d[Ee]
+        EN\d+\.\d+ |                            # Engineering: ENw.d
+        ES\d+\.\d+                              # Scientific: ESw.d
+    )$
+""",
+    re.VERBOSE,
+)
+
+
 class BinaryTableHeader(Header):
     """Default binary table header schema."""
 
@@ -64,19 +80,23 @@ class Column(SchemaElement, metaclass=ABCMeta):
 
     Attributes
     ----------
-    unit: astropy.units.Unit
+    unit: astropy.units.Unit | None
         unit of the column
     strict_unit: bool
         If True, the unit must match exactly, not only be convertible.
     required: bool
         If this column is required (True) or optional (False)
-    name: str
+    name: str | None
         Use to specify a different column name than the class attribute name.
-    ndim: int
+    ndim: int | None
         Dimensionality of a single row, numbers have ndim=0.
         The resulting data column has ``ndim_col = ndim + 1``
-    shape: Tuple[int]
+    shape: tuple[int] | None
         Shape of a single row.
+    display_format: str | None
+        Fortran-style text format string (TDISP#) for converting values to
+        strings. E.g. "F5.2" means display as floating points of width 5 with 2
+        digits after decimal point
     """
 
     def __init__(
@@ -84,8 +104,9 @@ class Column(SchemaElement, metaclass=ABCMeta):
         *,
         strict_unit=False,
         name=None,
-        ndim=None,
-        shape=None,
+        ndim: int | None = None,
+        shape: tuple[int] | None = None,
+        display_format: str | None = None,
         description: str = "",
         required: bool = True,
         unit: u.Unit | None = None,
@@ -108,6 +129,15 @@ class Column(SchemaElement, metaclass=ABCMeta):
         self.name = name
         self.shape = shape
         self.ndim = ndim
+        self.display_format = display_format
+
+        if self.display_format and not FORTRAN_FORMAT_REGEX.fullmatch(
+            self.display_format
+        ):
+            raise SchemaError(
+                f"Column {self.name}: display format '{self.display_format}'"
+                "is not valid."
+            )
 
         if self.shape is not None:
             self.shape = tuple(shape)
@@ -159,8 +189,13 @@ class Column(SchemaElement, metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def dtype():
+    def dtype(self) -> type:
         """Equivalent numpy dtype."""
+
+    @property
+    @abstractmethod
+    def tform_code(self) -> str:
+        """FITS Format code."""
 
     def validate_data(self, data, onerror="raise"):
         """Validate the data of this column in table."""

@@ -6,6 +6,7 @@ from astropy.table import Column, Table
 
 from fits_schema.exceptions import (
     RequiredMissing,
+    SchemaError,
     WrongDims,
     WrongShape,
     WrongType,
@@ -452,3 +453,30 @@ def test_string_columns():
     tab.fixed_size = np.array(["This is ok", "not", "ok"]).astype("S20")
     with pytest.raises(WrongShape):
         tab.validate_data()
+
+
+def test_column_format():
+    from fits_schema.binary_table import FORTRAN_FORMAT_REGEX, Int64
+
+    col = Int64(name="test", display_format="F8.2")
+    assert col
+
+    test_values = [
+        "A10",
+        "I5",
+        "B8.3",
+        "O10",
+        "Z16",  # Character and integer formats
+        "F10.5",
+        "E12.3E2",
+        "D8.2E1",
+        "G15.4E3",  # Floating-point formats
+        "EN10.3",
+        "ES8.2",  # Engineering and scientific formats
+    ]
+
+    for value in test_values:
+        assert FORTRAN_FORMAT_REGEX.fullmatch(value)
+
+    with pytest.raises(SchemaError):
+        col = Int64(name="test", display_format="blarg")
