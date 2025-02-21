@@ -410,17 +410,26 @@ class String(Column):
         Parameters
         ----------
         string_size: int | None
-           require exact string storage size in characters
-           (termination character included).
+           required column element storage size in characters. Note that strings
+           may be smaller than this size if termination characters are used.
         max_string_length: int | None
-           require strings to be less than or equal to this number of characters
+           require strings to be less than or equal to this number of characters,
+           even if storage size is larger.
         min_string_length: int | None
-           require strings to be less than or equal to this number of characters
+           require strings to be longer than or equal to this number of characters
         """
         super().__init__(**kwargs)
         self.string_size = string_size
         self.max_string_length = max_string_length
         self.min_string_length = min_string_length
+
+        if string_size and (
+            max_string_length > string_size or min_string_length > string_size
+        ):
+            raise ValueError(
+                "Specified a max or min string length that is "
+                "incompatible with the required string size"
+            )
 
     def validate_data(self, data, onerror="raise"):
         """Validate the data of this column in table."""
