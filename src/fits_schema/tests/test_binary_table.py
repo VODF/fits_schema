@@ -351,3 +351,104 @@ def test_multiple_headers():
 
         class __header__(BinaryTableHeader, Headers1, Headers2):
             OBS_ID = HeaderCard(type_=int)
+
+
+def test_string_columns():
+    """Ensure we can use fixed (but unknown) length string columns.
+
+    Strings are just Char columns, but where we do not want to check for the
+    exact length, as the length is dependent on the longest string stored. If
+    shape=None, which is the default, this should work.
+    """
+    import numpy as np
+    from astropy.io import fits
+    from astropy.table import Table
+
+    from fits_schema.binary_table import BinaryTable, BinaryTableHeader, String
+
+    class TableWithStrings(BinaryTable):
+        class __header__(BinaryTableHeader):
+            pass
+
+        # if shape not specified, should allow allb
+        string_col = String()
+
+        # even for multi-dimensional string values:
+        nd_string_col = String(ndim=1)
+
+        # and finally ensure that if we do have a shape, it should be used:
+        shape_char_col = String(shape=(2,))
+
+        # Make sure if a unicode string column is passed in, we don't fail
+        unicode_col = String()
+
+        # column with a maximum string length of 10 characters
+        max_col = String(max_string_length=10)
+
+        # column with a maximum string length of 10 characters
+        min_col = String(min_string_length=4)
+
+        # column requiring fixed size storage of 7 characters
+        fixed_size = String(string_size=7)
+
+    table = Table(
+        {
+            "string_col": np.asarray(["This", "is a", "string column"], dtype="S"),
+            "nd_string_col": np.asarray(
+                [["This", "is"], ["an", "n-dim string"], ["string", "column"]],
+                dtype="S",
+            ),
+            "shape_char_col": np.asarray(
+                [["This", "is"], ["an", "n-dim string"], ["string", "column"]],
+                dtype="S",
+            ),
+            "unicode_col": np.asarray(["This", "is a", "string column"], dtype="U"),
+            "max_col": np.asarray(["short", "strings", "are ok"], dtype="S"),
+            "min_col": np.asarray(["must", "be at least", "4 chars"], dtype="S"),
+            "fixed_size": np.asarray(["test", "test2", "test3"]).astype("S7"),
+        }
+    )
+
+    hdu = fits.BinTableHDU(data=table)
+
+    # try via HDU conversion first:
+    TableWithStrings.validate_hdu(hdu)
+
+    # and also directly as a table
+    TableWithStrings(table)
+
+    # check we can set the value using any type:
+    tab = TableWithStrings(table)
+    tab.string_col = np.asarray(["This", "is a", "string column"], dtype="S")
+    tab.validate_data()
+    tab.string_col = np.asarray(["This", "is a", "string column"], dtype="U")
+    tab.validate_data()
+    tab.string_col = np.asarray(["This", "is a", "string column"])
+    tab.validate_data()
+    tab.string_col = ["This", "is a", "string column"]
+    tab.validate_data()
+
+    # check that non-ascii is forbidden:
+    tab = TableWithStrings(table)
+    tab.string_col = ["This", "is a", "bad å¬≠≈ç´"]
+    with pytest.raises(WrongType):
+        tab.validate_data()
+
+    tab = TableWithStrings(table)
+    tab.max_col = [
+        "This is far too long",
+        "a string",
+        "that should be under 10 chars",
+    ]
+    with pytest.raises(WrongShape):
+        tab.validate_data()
+
+    tab = TableWithStrings(table)
+    tab.min_col = ["This is ok", "not", "ok"]
+    with pytest.raises(WrongShape):
+        tab.validate_data()
+
+    tab = TableWithStrings(table)
+    tab.fixed_size = np.array(["This is ok", "not", "ok"]).astype("S20")
+    with pytest.raises(WrongShape):
+        tab.validate_data()

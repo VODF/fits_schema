@@ -34,7 +34,7 @@ __all__ = [
     "Int16",
     "Int32",
     "Int64",
-    "Char",
+    "String",
     "Float",
     "Double",
     "ComplexFloat",
@@ -42,6 +42,7 @@ __all__ = [
 ]
 
 log = logging.getLogger(__name__)
+_string_length = np.vectorize(len)
 
 
 class BinaryTableHeader(Header):
@@ -166,7 +167,7 @@ class Column(SchemaElement, metaclass=ABCMeta):
         if data is None:
             if self.required:
                 log_or_raise(
-                    f"Column {self.name} is required but missing",
+                    f"Column '{self.name}' is required but missing",
                     RequiredMissing,
                     log=log,
                     onerror=onerror,
@@ -178,10 +179,30 @@ class Column(SchemaElement, metaclass=ABCMeta):
         try:
             # casting = 'safe' makes sure we don't change values
             # e.g. casting doubles to integers will no longer work
-            data = np.asanyarray(data).astype(self.dtype, casting="safe")
+
+            if np.dtype(data.dtype).char in ["S", "U"]:
+                # special case is if this is a string column, i.e. a Char field
+                # with shape=None. There we should ignore the length of the
+                # numpy dtype (e.g. 'S12' should be checked as 'S'). Note that
+                # inside a FITS file, the strings are stored as dtype('S')
+                # always, however if you call hdu.data[column], they are
+                # magically converted to 'U' by astropy, but not for astropy
+                # Tables or np.recarrays (why is not obvious).
+                try:
+                    # string data must be ascii only, so ensure it by casting:
+                    data = np.asanyarray(data).astype("S")
+                except UnicodeError as err:
+                    log_or_raise(
+                        f"Column '{self.name}': non-ascii data is not allowed ({data=}): {err}",
+                        WrongType,
+                        log=log,
+                        onerror=onerror,
+                    )
+            else:
+                data = np.asanyarray(data).astype(self.dtype, casting="safe")
         except TypeError as e:
             log_or_raise(
-                f"dtype not convertible to column dtype: {e}",
+                f"Column '{self.name}': dtype not convertible to column dtype: {e}",
                 WrongType,
                 log=log,
                 onerror=onerror,
@@ -189,40 +210,47 @@ class Column(SchemaElement, metaclass=ABCMeta):
 
         if self.strict_unit and hasattr(data, "unit") and data.unit != self.unit:
             log_or_raise(
-                f"Unit {data.unit} of data does not match specified unit {self.unit}",
+                f"Column '{self.name}': unit '{data.unit}' of data does not match specified unit '{self.unit}'",
                 WrongUnit,
                 log=log,
                 onerror=onerror,
             )
 
-        # a table as one dimension more than it's rows,
+        # a table has one dimension more than it's rows,
         # we also allow a single scalar value for scalar rows
         if data.ndim != self.ndim + 1 and not (data.ndim == 0 and self.ndim == 0):
             log_or_raise(
-                f"Dimensionality of rows is {data.ndim - 1}, should be {self.ndim}",
+                f"Column '{self.name}': dimensionality of rows is {data.ndim - 1}, should be {self.ndim}",
                 WrongDims,
                 log=log,
                 onerror=onerror,
             )
 
         # the rest of the tests is done on a quantity object with correct dtype
-        try:
-            q = u.Quantity(
-                data, self.unit, copy=False, ndmin=self.ndim + 1, dtype=self.dtype
-            )
-        except u.UnitConversionError as e:
-            log_or_raise(str(e), WrongUnit, log=log, onerror=onerror)
+        if self.unit:
+            try:
+                q = u.Quantity(
+                    data, self.unit, copy=False, ndmin=self.ndim + 1, dtype=self.dtype
+                )
+                data = q
+            except u.UnitConversionError as e:
+                log_or_raise(
+                    "Column '{self.name}': " + str(e),
+                    WrongUnit,
+                    log=log,
+                    onerror=onerror,
+                )
 
-        shape = q.shape[1:]
+        shape = data.shape[1:]
         if self.shape is not None and self.shape != shape:
             log_or_raise(
-                f"Shape {shape} does not match required shape {self.shape}",
+                f"Column '{self.name}': Shape {shape} does not match required shape {self.shape}",
                 WrongShape,
                 log=log,
                 onerror=onerror,
             )
 
-        return q
+        return data
 
 
 class BinaryTableMeta(type):
@@ -375,11 +403,86 @@ class Int64(Column):
     dtype = np.int64
 
 
-class Char(Column):
-    """Single byte character binary table column."""
+class String(Column):
+    """Character string binary table column."""
 
     tform_code = "A"
-    dtype = np.dtype("S1")
+    dtype = np.dtype("S")
+
+    def __init__(
+        self,
+        *,
+        string_size: int = None,
+        max_string_length: int = None,
+        min_string_length: int = None,
+        **kwargs,
+    ):
+        """
+        Construct a String column.
+
+        Parameters
+        ----------
+        string_size: int | None
+           required column element storage size in characters. Note that strings
+           may be smaller than this size if termination characters are used.
+        max_string_length: int | None
+           require strings to be less than or equal to this number of characters,
+           even if storage size is larger.
+        min_string_length: int | None
+           require strings to be longer than or equal to this number of characters
+        """
+        super().__init__(**kwargs)
+        self.string_size = string_size
+        self.max_string_length = max_string_length
+        self.min_string_length = min_string_length
+
+        if (
+            (string_size and max_string_length)
+            and (max_string_length > string_size)
+            or (string_size and min_string_length)
+            and (min_string_length > string_size)
+        ):
+            raise ValueError(
+                "Specified a max or min string length that is "
+                "incompatible with the required string size"
+            )
+
+    def validate_data(self, data, onerror="raise"):
+        """Validate the data of this column in table."""
+        super().validate_data(data, onerror=onerror)
+
+        # check fixed-size, note that if inside an HDU, even byte-strings get
+        # returned as unicode, so have to multiply size by 4.
+        if self.string_size and (
+            (data.dtype.char == "U" and data.dtype.itemsize != self.string_size * 4)
+            or (data.dtype.char == "S" and data.dtype.itemsize != self.string_size)
+        ):
+            log_or_raise(
+                f"Column '{self.name}': storage size should be {self.string_size} bytes, not {data.dtype.itemsize}",
+                WrongShape,
+                log=log,
+                onerror=onerror,
+            )
+
+        if self.max_string_length and np.any(
+            _string_length(data) > self.max_string_length
+        ):
+            log_or_raise(
+                f"Column '{self.name}': strings must not be longer than {self.max_string_length} characters.",
+                WrongShape,
+                log=log,
+                onerror=onerror,
+            )
+
+        if self.min_string_length and np.any(
+            _string_length(data) < self.min_string_length
+        ):
+            log_or_raise(
+                f"Column '{self.name}': strings must not be shorter than {self.min_string_length} characters.",
+                WrongShape,
+                log=log,
+                onerror=onerror,
+            )
 
 
 class Float(Column):
