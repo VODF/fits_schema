@@ -452,3 +452,10 @@ def test_string_columns():
     tab.fixed_size = np.array(["This is ok", "not", "ok"]).astype("S20")
     with pytest.raises(WrongShape):
         tab.validate_data()
+
+
+def test_column_format():
+    from fits_schema.binary_table import Int64
+
+    col = Int64(name="test", display_format="2F8.2")
+    assert col

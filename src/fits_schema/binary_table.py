@@ -6,6 +6,7 @@ https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
 """
 
 import logging
+import re
 from abc import ABCMeta, abstractmethod
 
 import astropy.units as u
@@ -45,6 +46,28 @@ log = logging.getLogger(__name__)
 _string_length = np.vectorize(len)
 
 
+FORTRAN_FORMAT_REGEX = re.compile(
+    r"""
+    \s*                    # Optional spaces
+    (\d+)?                 # Optional repeat count
+    (                      # Group for format descriptors
+        I\d+               | # Integer format
+        F\d+\.\d+          | # Floating point format
+        E\d+\.\d+          | # Scientific notation format
+        D\d+\.\d+          | # Double precision scientific format
+        A\d+               | # String format
+        L\d+               | # Logical format
+        X\d+               | # Space format
+        G\d+\.\d+          | # General format
+        T\d+               | # Tab format
+        '(.*?)'            | # Literal string format
+    )
+    \s*                    # Optional spaces
+""",
+    re.VERBOSE | re.IGNORECASE,
+)
+
+
 class BinaryTableHeader(Header):
     """Default binary table header schema."""
 
@@ -77,8 +100,10 @@ class Column(SchemaElement, metaclass=ABCMeta):
         The resulting data column has ``ndim_col = ndim + 1``
     shape: tuple[int] | None
         Shape of a single row.
-    format: str | None
-        Fortran-style text format string (TFORM#) for converting values to strings.
+    display_format: str | None
+        Fortran-style text format string (TDISP#) for converting values to
+        strings. E.g. "F5.2" means display as floating points of width 5 with 2
+        digits after decimal point
     """
 
     def __init__(
@@ -88,7 +113,7 @@ class Column(SchemaElement, metaclass=ABCMeta):
         name=None,
         ndim: int | None = None,
         shape: tuple[int] | None = None,
-        format: str | None = None,
+        display_format: str | None = None,
         description: str = "",
         required: bool = True,
         unit: u.Unit | None = None,
@@ -111,7 +136,15 @@ class Column(SchemaElement, metaclass=ABCMeta):
         self.name = name
         self.shape = shape
         self.ndim = ndim
-        self.format = format
+        self.display_format = display_format
+
+        if self.display_format and not re.match(
+            FORTRAN_FORMAT_REGEX, self.display_format
+        ):
+            raise SchemaError(
+                f"Column {self.name}: display format '{self.display_format}'"
+                "is not valid."
+            )
 
         if self.shape is not None:
             self.shape = tuple(shape)
