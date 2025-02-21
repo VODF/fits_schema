@@ -423,8 +423,11 @@ class String(Column):
         self.max_string_length = max_string_length
         self.min_string_length = min_string_length
 
-        if string_size and (
-            max_string_length > string_size or min_string_length > string_size
+        if (
+            (string_size and max_string_length)
+            and (max_string_length > string_size)
+            or (string_size and min_string_length)
+            and (min_string_length > string_size)
         ):
             raise ValueError(
                 "Specified a max or min string length that is "
