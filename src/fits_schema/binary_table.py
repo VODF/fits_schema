@@ -399,6 +399,7 @@ class String(Column):
     def __init__(
         self,
         *,
+        string_size: int = None,
         max_string_length: int = None,
         min_string_length: int = None,
         **kwargs,
@@ -408,16 +409,35 @@ class String(Column):
 
         Parameters
         ----------
-        string_length: int | None
-           require exact string length
+        string_size: int | None
+           require exact string storage size in characters
+           (termination character included).
+        max_string_length: int | None
+           require strings to be less than or equal to this number of characters
+        min_string_length: int | None
+           require strings to be less than or equal to this number of characters
         """
         super().__init__(**kwargs)
+        self.string_size = string_size
         self.max_string_length = max_string_length
         self.min_string_length = min_string_length
 
     def validate_data(self, data, onerror="raise"):
         """Validate the data of this column in table."""
         super().validate_data(data, onerror=onerror)
+
+        # check fixed-size, note that if inside an HDU, even byte-strings get
+        # returned as unicode, so have to multiply size by 4.
+        if self.string_size and (
+            (data.dtype.char == "U" and data.dtype.itemsize != self.string_size * 4)
+            or (data.dtype.char == "S" and data.dtype.itemsize != self.string_size)
+        ):
+            log_or_raise(
+                f"Column '{self.name}': storage size should be {self.string_size} bytes, not {data.dtype.itemsize}",
+                WrongShape,
+                log=log,
+                onerror=onerror,
+            )
 
         if self.max_string_length and np.any(
             _string_length(data) > self.max_string_length

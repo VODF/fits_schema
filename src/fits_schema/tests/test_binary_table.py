@@ -388,6 +388,9 @@ def test_string_columns():
         # column with a maximum string length of 10 characters
         min_col = String(min_string_length=4)
 
+        # column requiring fixed size storage of 7 characters
+        fixed_size = String(string_size=7)
+
     table = Table(
         {
             "string_col": np.asarray(["This", "is a", "string column"], dtype="S"),
@@ -402,6 +405,7 @@ def test_string_columns():
             "unicode_col": np.asarray(["This", "is a", "string column"], dtype="U"),
             "max_col": np.asarray(["short", "strings", "are ok"], dtype="S"),
             "min_col": np.asarray(["must", "be at least", "4 chars"], dtype="S"),
+            "fixed_size": np.asarray(["test", "test2", "test3"]).astype("S7"),
         }
     )
 
@@ -441,5 +445,10 @@ def test_string_columns():
 
     tab = TableWithStrings(table)
     tab.min_col = ["This is ok", "not", "ok"]
+    with pytest.raises(WrongShape):
+        tab.validate_data()
+
+    tab = TableWithStrings(table)
+    tab.fixed_size = np.array(["This is ok", "not", "ok"]).astype("S20")
     with pytest.raises(WrongShape):
         tab.validate_data()
