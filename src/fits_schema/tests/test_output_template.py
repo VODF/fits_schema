@@ -6,7 +6,14 @@
 def test_output_hdu():
     """Checks BinTable, Header, HeaderCard, and Column outputs."""
 
-    from fits_schema import BinaryTable, BinaryTableHeader, Double, HeaderCard, Int64
+    from fits_schema import (
+        BinaryTable,
+        BinaryTableHeader,
+        Double,
+        HeaderCard,
+        Int64,
+        String,
+    )
     from fits_schema.output_template import bintable_template
 
     class TestTable(BinaryTable):
@@ -23,6 +30,7 @@ def test_output_hdu():
             display_format="F5.2",
         )
         EVENT_ID = Int64(description="Event identifier, unique within an observation")
+        STRING_COL = String()
 
     template_lines = list(bintable_template(TestTable))
 
