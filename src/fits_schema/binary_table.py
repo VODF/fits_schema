@@ -6,7 +6,6 @@ https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
 """
 
 import logging
-import re
 from abc import ABCMeta, abstractmethod
 
 import astropy.units as u
@@ -44,21 +43,6 @@ __all__ = [
 
 log = logging.getLogger(__name__)
 _string_length = np.vectorize(len)
-
-
-FORTRAN_FORMAT_REGEX = re.compile(
-    r"""
-    ^(
-        A\d+ |                                  # Character: Aw (A followed by digits)
-        [IBOZ]\d+(\.\d+)? |                     # Integer: Iw[.m], Binary/Octal/Hex: Bw[.m], Ow[.m], Zw[.m]
-        F\d+\.\d+ |                             # Fixed-point: Fw.d
-        (E|D|G)\d+\.\d+(E\d+)? |                # Exponential/General: Ew.d[Ee], Dw.d[Ee], Gw.d[Ee]
-        EN\d+\.\d+ |                            # Engineering: ENw.d
-        ES\d+\.\d+                              # Scientific: ESw.d
-    )$
-""",
-    re.VERBOSE,
-)
 
 
 class BinaryTableHeader(Header):
@@ -131,14 +115,6 @@ class Column(SchemaElement, metaclass=ABCMeta):
         self.ndim = ndim
         self.display_format = display_format
 
-        if self.display_format and not FORTRAN_FORMAT_REGEX.fullmatch(
-            self.display_format
-        ):
-            raise SchemaError(
-                f"Column {self.name}: display format '{self.display_format}'"
-                "is not valid."
-            )
-
         if self.shape is not None:
             self.shape = tuple(shape)
             # Dimensionality of the table is one more than that of a single row
@@ -150,6 +126,18 @@ class Column(SchemaElement, metaclass=ABCMeta):
             # simple column by default
             if self.ndim is None:
                 self.ndim = 0
+
+        # use astropy to validate the parameters.
+        try:
+            fits.Column(
+                name=self.name,
+                format=self.tform_code,
+                unit=self.unit,
+                disp=self.display_format,
+                dim=f"{self.ndim:d}",
+            )
+        except fits.VerifyError as err:
+            raise SchemaError(f"Column {self.name}: {err}")
 
     def __get__(self, instance, owner=None):
         """Get data."""
