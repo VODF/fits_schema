@@ -94,7 +94,7 @@ def column_template(column: Column) -> Generator[str]:
     if not hasattr(column, "tform_code"):
         raise AttributeError(f"Missing tform_code for column {column}")
 
-    yield f"TFORM# = {column.tform_code:20s} / {column.dtype.__name__}"
+    yield f"TFORM# = {column.tform_code:20s} / {column.__class__.__name__}"
 
     if column.unit:
         yield (
