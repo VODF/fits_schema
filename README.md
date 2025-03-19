@@ -29,3 +29,28 @@ class Events(BinaryTable):
 hdulist = fits.open('events.fits')
 Events.validate_hdu(hdulist['events'])
 ```
+## Installation for developpers
+It is highly recommanded to use your own fork in order to follow the individual Pull Requests. Otherwise, the installation process is the following:
+
+```bash
+git clone https://github.com/VODF/vodf_schema
+cd vodf_schema
+
+conda create -n vodf python=3.13 astropy sphinx 
+conda activate vodf
+pip install git+https://github.com/VODF/fits_schema
+pip install -e .[all]   # installs vodf_schema in edit mode
+```
+
+A `pre-commit` system has been setup. To initialise it, use this command
+```bash
+pip install pre-commit
+pre-commit install
+pre-commit run
+```
+
+## Licence
+VODF is licensed under a 3-clause BSD style license - see the `LICENSE <https://github.com/VODF/fits_schema/blob/main/LICENSE>`_  file.
+
+## Supporting the project
+The VODF initiative is not sponsored and the development is made by the staff of the institutes supporting the project over their research time. Any contribution is then encouraged, as punctual or regular contributor.
