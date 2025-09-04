@@ -77,7 +77,7 @@ def test_access():
     assert t.test[0] == 5.0
 
     # assignment does not validate
-    t.test == ["foo"]
+    t.test = ["foo"]
 
     del t.test
     assert t.test is None
