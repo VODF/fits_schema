@@ -165,7 +165,7 @@ class HeaderCard(SchemaElement):
         valid = True
         k = self.keyword
 
-        if self.position is not None and self.position != pos:
+        if self.position is not None and not self.position == pos:
             valid = False
             msg = f"Expected card {k} at position {self.position} but found at {pos}"
             log_or_raise(msg, WrongPosition, log, onerror=onerror)
