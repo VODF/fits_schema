@@ -14,6 +14,8 @@ A library for defining and documenting FITS file format schemas.
     changelog
 
 
+.. autofitsheader:: fits_schema.fits_standard.FITSStandardHeaders
+   :members:
 
 Indices and tables
 ------------------

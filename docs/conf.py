@@ -6,6 +6,12 @@ list see the documentation:
 https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path("_ext").resolve()))  # add extensions path
+
+
 # -- Project information -----------------------------------------------------
 # import your own package here
 import fits_schema
@@ -30,6 +36,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "numpydoc",
     "sphinx_changelog",
+    "autodoc_fits",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
